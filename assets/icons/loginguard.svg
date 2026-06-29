@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="LoginGuard icon">
+  <rect width="64" height="64" rx="14" fill="#172033"/>
+  <path d="M32 9 50 16v15c0 11.5-7.3 19.5-18 24-10.7-4.5-18-12.5-18-24V16l18-7Z" fill="#f8fafc"/>
+  <path d="M32 15 45 20v11c0 8.2-5.1 14.3-13 18-7.9-3.7-13-9.8-13-18V20l13-5Z" fill="#0f8a5f"/>
+  <path d="M24 32.5 29.4 38 41 25.5" fill="none" stroke="#f8fafc" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoginGuard</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="header">
+        <img class="brand-icon" src="assets/icons/loginguard.svg" alt="" aria-hidden="true">
+        <div>
+          <h1>LoginGuard</h1>
+          <p class="subtitle">Current page check</p>
+        </div>
+      </header>
+
+      <section class="panel url-panel" aria-labelledby="url-heading">
+        <h2 id="url-heading">URL</h2>
+        <p id="current-url" class="url-value">Loading...</p>
+      </section>
+
+      <section class="summary" aria-live="polite">
+        <article class="status-card" data-state="neutral">
+          <span class="status-label">HTTPS</span>
+          <strong id="https-status">Checking</strong>
+        </article>
+        <article class="status-card" data-state="neutral">
+          <span class="status-label">Login form</span>
+          <strong id="login-status">Checking</strong>
+        </article>
+        <article class="status-card" data-state="neutral">
+          <span class="status-label">Fields</span>
+          <strong id="field-status">Checking</strong>
+        </article>
+      </section>
+
+      <section class="panel" aria-labelledby="details-heading">
+        <h2 id="details-heading">Security Summary</h2>
+        <ul id="security-summary" class="summary-list">
+          <li>Analyzing the visible page...</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="popup.js" defer></script>
+  </body>
+</html>
