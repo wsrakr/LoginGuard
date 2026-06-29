@@ -5,10 +5,10 @@
   "description": "Analyze the current page for login form indicators and basic transport security.",
   "permissions": ["activeTab", "scripting"],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_title": "LoginGuard"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   }
 }

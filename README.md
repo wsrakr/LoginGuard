@@ -45,9 +45,13 @@ Planned module principles:
 
 Current module-like areas:
 
-- `utils/dom-utils.js`: DOM analysis helpers for login form and credential field detection.
-- `content.js`: Content-script bridge that runs analysis inside the active page.
-- `popup.js`: Popup controller that requests analysis and renders the summary.
+- `src/core/scanner.js`: Coordinates read-only assessment modules.
+- `src/core/risk-engine.js`: Converts module results into a simple summary.
+- `src/modules/login/login-detector.js`: Detects login forms and credential fields.
+- `src/modules/https/https-checker.js`: Checks the current page URL protocol.
+- `src/utils/dom-utils.js`: Shared DOM helpers for module authors.
+- `src/content/content.js`: Content-script bridge that runs analysis inside the active page.
+- `src/popup/popup.js`: Popup controller that requests analysis and renders the summary.
 
 ## Ethical Use
 
@@ -117,17 +121,31 @@ Contributions should avoid:
 ```text
 .
 |-- manifest.json
-|-- background.js
-|-- content.js
-|-- popup.html
-|-- popup.css
-|-- popup.js
 |-- assets/
 |   `-- icons/
 |       |-- loginguard.svg
 |       `-- README.md
-`-- utils/
-    `-- dom-utils.js
+|-- docs/
+|   `-- README.md
+`-- src/
+    |-- background/
+    |   `-- background.js
+    |-- content/
+    |   `-- content.js
+    |-- core/
+    |   |-- risk-engine.js
+    |   `-- scanner.js
+    |-- modules/
+    |   |-- https/
+    |   |   `-- https-checker.js
+    |   `-- login/
+    |       `-- login-detector.js
+    |-- popup/
+    |   |-- popup.css
+    |   |-- popup.html
+    |   `-- popup.js
+    `-- utils/
+        `-- dom-utils.js
 ```
 
 ## Local Installation

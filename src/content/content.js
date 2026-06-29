@@ -1,3 +1,4 @@
+// Content script bridge that exposes current-page scan results to the popup.
 (() => {
   const CONTENT_STATE_KEY = "__loginGuardContentInitialized";
   const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
@@ -14,15 +15,15 @@
     }
 
     try {
-      const analyzer = globalThis.LoginGuardDomUtils;
+      const scanner = globalThis.LoginGuardScanner;
 
-      if (!analyzer) {
-        throw new Error("LoginGuard DOM utilities were not loaded.");
+      if (!scanner) {
+        throw new Error("LoginGuard scanner was not loaded.");
       }
 
       sendResponse({
         ok: true,
-        analysis: analyzer.analyzeLoginSurface(document),
+        analysis: scanner.scan(document),
       });
     } catch (error) {
       sendResponse({

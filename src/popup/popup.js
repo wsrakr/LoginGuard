@@ -1,5 +1,13 @@
+// Popup controller that requests active-tab analysis and renders the result.
 const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
-const INJECTION_FILES = ["utils/dom-utils.js", "content.js"];
+const INJECTION_FILES = [
+  "src/utils/dom-utils.js",
+  "src/modules/https/https-checker.js",
+  "src/modules/login/login-detector.js",
+  "src/core/risk-engine.js",
+  "src/core/scanner.js",
+  "src/content/content.js",
+];
 
 const elements = {
   currentUrl: document.querySelector("#current-url"),
@@ -75,13 +83,7 @@ function renderAnalysis(analysis) {
   setCard(cards.fields, elements.fieldStatus, `${totalTrackedFields} found`, totalTrackedFields > 0 ? "safe" : "warning");
 
   renderSummary([
-    analysis.security.usesHttps
-      ? "The page is loaded over HTTPS."
-      : "The page is not using HTTPS. Credentials entered here may be exposed in transit.",
-    analysis.hasLoginForm
-      ? `Login indicators were found in ${analysis.forms.length} form area${analysis.forms.length === 1 ? "" : "s"}.`
-      : "No clear login form was detected on the current page.",
-    `Detected fields: ${fieldCounts.username} username, ${fieldCounts.email} email, ${fieldCounts.password} password.`,
+    ...analysis.risk.summary,
     "No forms were submitted and no data left this page.",
   ]);
 }
