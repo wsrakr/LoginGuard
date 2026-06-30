@@ -3,7 +3,7 @@
   function summarize(results) {
     const summary = [
       getHttpsSummary(results.https),
-      getLoginSummary(results.login),
+      getAuthSummary(results.auth, results.login),
       getFieldSummary(results.login.fields.counts),
     ];
 
@@ -19,9 +19,9 @@
       : "The page is not using HTTPS. Credentials entered here may be exposed in transit.";
   }
 
-  function getLoginSummary(loginResult) {
-    return loginResult.authenticationDetected
-      ? `Authentication Page: Yes. Type: ${loginResult.type}. Confidence: ${loginResult.confidenceScore}%.`
+  function getAuthSummary(authResult, loginResult) {
+    return authResult.type !== "Unknown" || loginResult.authenticationDetected
+      ? `Authentication Type: ${authResult.type}. Classification Confidence: ${authResult.confidence} (${authResult.score}%).`
       : "No clear authentication page was detected on the current page.";
   }
 
@@ -30,11 +30,13 @@
   }
 
   function getOverallLevel(results) {
-    if (!results.https.usesHttps && results.login.authenticationDetected) {
+    const authenticationDetected = results.auth.type !== "Unknown" || results.login.authenticationDetected;
+
+    if (!results.https.usesHttps && authenticationDetected) {
       return "high";
     }
 
-    if (!results.https.usesHttps || results.login.authenticationDetected) {
+    if (!results.https.usesHttps || authenticationDetected) {
       return "medium";
     }
 

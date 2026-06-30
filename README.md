@@ -18,7 +18,7 @@ The project is intentionally defensive. It is designed for systems you own, admi
 - Detects visible username, email, and password fields.
 - Detects likely submit buttons.
 - Detects SPA-style login areas that do not use a native `<form>` tag.
-- Classifies authentication pages as Login, Registration, or Unknown.
+- Classifies authentication pages as Login, Registration, Password Recovery, Password Reset, MFA / 2FA, SSO, or Unknown.
 - Reports authentication confidence as a percentage.
 - Lists detection reasons such as password fields, email fields, submit controls, and matching page titles.
 - Shows a simple security summary in the popup.
@@ -52,6 +52,7 @@ Current module-like areas:
 
 - `src/core/scanner.js`: Coordinates read-only assessment modules.
 - `src/core/risk-engine.js`: Converts module results into a simple summary.
+- `src/modules/auth/auth-classifier.js`: Authentication Classification module using passive signals from titles, headings, controls, links, labels, placeholders, inputs, and URL paths.
 - `src/modules/login/login-detector.js`: Login Detection Engine for native forms, SPA-style auth areas, credential fields, submit buttons, authentication page type, confidence scoring, and detection reasons.
 - `src/modules/https/https-checker.js`: Checks the current page URL protocol.
 - `src/utils/dom-utils.js`: Shared DOM helpers for module authors.
@@ -141,6 +142,8 @@ Contributions should avoid:
     |   |-- risk-engine.js
     |   `-- scanner.js
     |-- modules/
+    |   |-- auth/
+    |   |   `-- auth-classifier.js
     |   |-- https/
     |   |   `-- https-checker.js
     |   `-- login/

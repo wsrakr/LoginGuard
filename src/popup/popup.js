@@ -3,6 +3,7 @@ const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
 const INJECTION_FILES = [
   "src/utils/dom-utils.js",
   "src/modules/https/https-checker.js",
+  "src/modules/auth/auth-classifier.js",
   "src/modules/login/login-detector.js",
   "src/core/risk-engine.js",
   "src/core/scanner.js",
@@ -78,21 +79,22 @@ function sendAnalyzeMessage(tabId) {
 
 function renderAnalysis(analysis) {
   const login = analysis.modules.login;
+  const auth = analysis.modules.auth;
   const usernameOrEmailFields = login.usernameFields + login.emailFields;
 
   elements.currentUrl.textContent = analysis.url;
 
   setCard(cards.https, elements.httpsStatus, analysis.security.usesHttps ? "HTTPS" : "Not HTTPS", analysis.security.usesHttps ? "safe" : "danger");
-  setCard(cards.login, elements.loginStatus, login.authenticationDetected ? "Yes" : "No", login.authenticationDetected ? "safe" : "warning");
-  setCard(cards.authType, elements.authTypeStatus, login.type, login.type === "Unknown" ? "warning" : "safe");
-  setCard(cards.confidence, elements.confidenceStatus, `${login.confidenceScore}%`, getConfidenceState(login.confidenceScore));
+  setCard(cards.login, elements.loginStatus, analysis.authenticationDetected ? "Yes" : "No", analysis.authenticationDetected ? "safe" : "warning");
+  setCard(cards.authType, elements.authTypeStatus, auth.type, auth.type === "Unknown" ? "warning" : "safe");
+  setCard(cards.confidence, elements.confidenceStatus, `${auth.confidence} (${auth.score}%)`, getConfidenceState(auth.score));
   setCard(cards.fields, elements.fieldStatus, `${login.passwordFields} / ${usernameOrEmailFields}`, login.passwordFields > 0 || usernameOrEmailFields > 0 ? "safe" : "warning");
 
   renderSummary([
     ...analysis.risk.summary,
     `Password fields: ${login.passwordFields}.`,
     `Username/email fields: ${usernameOrEmailFields}.`,
-    ...login.reasons.map((reason) => `Reason: ${reason}.`),
+    ...auth.reasons.map((reason) => `Reason: ${reason}.`),
     "No forms were submitted and no data left this page.",
   ]);
 }
