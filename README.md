@@ -21,8 +21,10 @@ The project is intentionally defensive. It is designed for systems you own, admi
 - Classifies authentication pages as Login, Registration, Password Recovery, Password Reset, MFA / 2FA, SSO, or Unknown.
 - Reports authentication confidence as a percentage.
 - Lists detection reasons such as password fields, email fields, submit controls, and matching page titles.
+- Checks common security headers when response headers are available.
+- Shows Present / Missing status and short recommendations for missing security headers.
 - Shows a simple security summary in the popup.
-- Runs DOM-only analysis from the browser.
+- Runs passive browser-based analysis from the current page.
 - Avoids form submission, payload delivery, brute force behavior, and network requests.
 
 ## Roadmap
@@ -48,11 +50,24 @@ Planned module principles:
 - No network activity unless a future feature clearly documents and gates it for authorized use.
 - Findings should include practical remediation notes for developers.
 
+## Extension Permissions
+
+LoginGuard uses Manifest V3 permissions for passive current-page analysis:
+
+- `activeTab`: lets the popup inspect the tab the user is actively viewing.
+- `scripting`: injects read-only scanner modules after the user opens the popup.
+- `webRequest`: observes completed main-frame response headers.
+- `storage`: stores a short-lived per-tab security-header snapshot in `chrome.storage.session`.
+- `http://*/*` and `https://*/*` host permissions: allow Chrome's `webRequest` API to expose response headers for regular web pages.
+
+The Security Headers Scanner does not send requests, submit forms, inject payloads, or perform active attack attempts. Header capture is passive and limited to browser-observed main-frame responses.
+
 Current module-like areas:
 
 - `src/core/scanner.js`: Coordinates read-only assessment modules.
 - `src/core/risk-engine.js`: Converts module results into a simple summary.
 - `src/modules/auth/auth-classifier.js`: Authentication Classification module using passive signals from titles, headings, controls, links, labels, placeholders, inputs, and URL paths.
+- `src/modules/headers/header-scanner.js`: Security Headers Scanner for common browser security headers and DOM-visible meta policy fallbacks.
 - `src/modules/login/login-detector.js`: Login Detection Engine for native forms, SPA-style auth areas, credential fields, submit buttons, authentication page type, confidence scoring, and detection reasons.
 - `src/modules/https/https-checker.js`: Checks the current page URL protocol.
 - `src/utils/dom-utils.js`: Shared DOM helpers for module authors.
@@ -144,6 +159,8 @@ Contributions should avoid:
     |-- modules/
     |   |-- auth/
     |   |   `-- auth-classifier.js
+    |   |-- headers/
+    |   |   `-- header-scanner.js
     |   |-- https/
     |   |   `-- https-checker.js
     |   `-- login/

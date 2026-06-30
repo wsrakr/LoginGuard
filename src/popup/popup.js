@@ -1,10 +1,12 @@
 // Popup controller that requests active-tab analysis and renders the result.
 const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
+const GET_SECURITY_HEADERS_MESSAGE = "LOGIN_GUARD_GET_SECURITY_HEADERS";
 const INJECTION_FILES = [
   "src/utils/dom-utils.js",
   "src/modules/https/https-checker.js",
   "src/modules/auth/auth-classifier.js",
   "src/modules/login/login-detector.js",
+  "src/modules/headers/header-scanner.js",
   "src/core/risk-engine.js",
   "src/core/scanner.js",
   "src/content/content.js",
@@ -18,6 +20,7 @@ const elements = {
   confidenceStatus: document.querySelector("#confidence-status"),
   fieldStatus: document.querySelector("#field-status"),
   summaryList: document.querySelector("#security-summary"),
+  headersList: document.querySelector("#security-headers"),
 };
 
 const cards = {
@@ -53,13 +56,17 @@ async function runPageCheck() {
     files: INJECTION_FILES,
   });
 
-  const analysis = await sendAnalyzeMessage(tab.id);
+  const responseHeaders = await getSecurityHeaders(tab.id, tab.url);
+  const analysis = await sendAnalyzeMessage(tab.id, responseHeaders);
   renderAnalysis(analysis);
 }
 
-function sendAnalyzeMessage(tabId) {
+function sendAnalyzeMessage(tabId, responseHeaders) {
   return new Promise((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, { type: MESSAGE_TYPE }, (response) => {
+    chrome.tabs.sendMessage(tabId, {
+      type: MESSAGE_TYPE,
+      responseHeaders,
+    }, (response) => {
       const lastError = chrome.runtime.lastError;
 
       if (lastError) {
@@ -73,6 +80,25 @@ function sendAnalyzeMessage(tabId) {
       }
 
       resolve(response.analysis);
+    });
+  });
+}
+
+function getSecurityHeaders(tabId, url) {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({
+      type: GET_SECURITY_HEADERS_MESSAGE,
+      tabId,
+      url,
+    }, (response) => {
+      const lastError = chrome.runtime.lastError;
+
+      if (lastError || !response?.ok) {
+        resolve(null);
+        return;
+      }
+
+      resolve(response.snapshot);
     });
   });
 }
@@ -97,6 +123,8 @@ function renderAnalysis(analysis) {
     ...auth.reasons.map((reason) => `Reason: ${reason}.`),
     "No forms were submitted and no data left this page.",
   ]);
+
+  renderHeaders(analysis.modules.headers);
 }
 
 function renderUnsupportedPage(url) {
@@ -110,6 +138,7 @@ function renderUnsupportedPage(url) {
     "LoginGuard can inspect regular HTTP and HTTPS web pages.",
     `This page cannot be analyzed from the popup: ${url || "unknown URL"}.`,
   ]);
+  renderHeaderItems(["Security headers are unavailable for this page."]);
 }
 
 function renderError(error) {
@@ -123,6 +152,7 @@ function renderError(error) {
     "The current page could not be analyzed.",
     error.message,
   ]);
+  renderHeaderItems(["Security headers could not be analyzed."]);
 }
 
 function setCard(card, valueElement, text, state) {
@@ -132,6 +162,29 @@ function setCard(card, valueElement, text, state) {
 
 function renderSummary(items) {
   elements.summaryList.replaceChildren(
+    ...items.map((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item;
+      return listItem;
+    }),
+  );
+}
+
+function renderHeaders(headersResult) {
+  const availabilityNote = headersResult.responseHeadersAvailable
+    ? []
+    : ["Response headers were not captured for this page load; DOM-visible meta policies were checked where possible."];
+  const headerItems = headersResult.headers.map((header) => {
+    const recommendation = header.recommendation ? ` Recommendation: ${header.recommendation}` : "";
+
+    return `${header.name}: ${header.status}.${recommendation}`;
+  });
+
+  renderHeaderItems([...availabilityNote, ...headerItems]);
+}
+
+function renderHeaderItems(items) {
+  elements.headersList.replaceChildren(
     ...items.map((item) => {
       const listItem = document.createElement("li");
       listItem.textContent = item;

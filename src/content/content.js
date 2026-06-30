@@ -23,7 +23,9 @@
 
       sendResponse({
         ok: true,
-        analysis: scanner.scan(document),
+        analysis: scanner.scan(document, {
+          responseHeaders: message.responseHeaders || null,
+        }),
       });
     } catch (error) {
       sendResponse({

@@ -5,6 +5,7 @@
       getHttpsSummary(results.https),
       getAuthSummary(results.auth, results.login),
       getFieldSummary(results.login.fields.counts),
+      getHeadersSummary(results.headers),
     ];
 
     return {
@@ -27,6 +28,10 @@
 
   function getFieldSummary(fieldCounts) {
     return `Detected fields: ${fieldCounts.password} password and ${fieldCounts.username + fieldCounts.email} username/email.`;
+  }
+
+  function getHeadersSummary(headersResult) {
+    return `Security headers: ${headersResult.presentCount} present, ${headersResult.missingCount} missing.`;
   }
 
   function getOverallLevel(results) {

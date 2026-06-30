@@ -3,7 +3,8 @@
   "name": "LoginGuard",
   "version": "0.1.0",
   "description": "Analyze the current page for login form indicators and basic transport security.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "storage", "webRequest"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_title": "LoginGuard"
