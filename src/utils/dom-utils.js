@@ -22,6 +22,15 @@
       .filter((field) => Boolean(field.classification));
   }
 
+  function getVisibleInputs(rootDocument) {
+    return Array.from(rootDocument.querySelectorAll("input")).filter(isVisibleElement);
+  }
+
+  function getVisibleButtons(rootDocument) {
+    return Array.from(rootDocument.querySelectorAll("button, input[type='button'], input[type='submit'], [role='button']"))
+      .filter(isVisibleElement);
+  }
+
   function classifyInput(input) {
     const type = (input.getAttribute("type") || "").trim().toLowerCase();
 
@@ -81,11 +90,19 @@
       return false;
     }
 
-    const style = input.ownerDocument.defaultView.getComputedStyle(input);
+    return isVisibleElement(input);
+  }
+
+  function isVisibleElement(element) {
+    if (element.disabled || element.getAttribute("aria-hidden") === "true") {
+      return false;
+    }
+
+    const style = element.ownerDocument.defaultView.getComputedStyle(element);
 
     return style.visibility !== "hidden"
       && style.display !== "none"
-      && input.getClientRects().length > 0;
+      && element.getClientRects().length > 0;
   }
 
   function getSearchableFieldText(input) {
@@ -130,7 +147,11 @@
   globalThis.LoginGuardDomUtils = {
     countFields,
     findCredentialFields,
+    getSearchableFieldText,
     getElementText,
+    getVisibleButtons,
+    getVisibleInputs,
+    isVisibleElement,
     toPublicFieldSummary,
   };
 })();

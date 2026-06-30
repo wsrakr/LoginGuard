@@ -20,21 +20,21 @@
   }
 
   function getLoginSummary(loginResult) {
-    return loginResult.hasLoginForm
-      ? `Login indicators were found in ${loginResult.forms.length} form area${loginResult.forms.length === 1 ? "" : "s"}.`
-      : "No clear login form was detected on the current page.";
+    return loginResult.authenticationDetected
+      ? `Authentication Page: Yes. Type: ${loginResult.type}. Confidence: ${loginResult.confidenceScore}%.`
+      : "No clear authentication page was detected on the current page.";
   }
 
   function getFieldSummary(fieldCounts) {
-    return `Detected fields: ${fieldCounts.username} username, ${fieldCounts.email} email, ${fieldCounts.password} password.`;
+    return `Detected fields: ${fieldCounts.password} password and ${fieldCounts.username + fieldCounts.email} username/email.`;
   }
 
   function getOverallLevel(results) {
-    if (!results.https.usesHttps && results.login.hasLoginForm) {
+    if (!results.https.usesHttps && results.login.authenticationDetected) {
       return "high";
     }
 
-    if (!results.https.usesHttps || results.login.hasLoginForm) {
+    if (!results.https.usesHttps || results.login.authenticationDetected) {
       return "medium";
     }
 

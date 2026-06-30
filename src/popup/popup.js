@@ -13,6 +13,8 @@ const elements = {
   currentUrl: document.querySelector("#current-url"),
   httpsStatus: document.querySelector("#https-status"),
   loginStatus: document.querySelector("#login-status"),
+  authTypeStatus: document.querySelector("#auth-type-status"),
+  confidenceStatus: document.querySelector("#confidence-status"),
   fieldStatus: document.querySelector("#field-status"),
   summaryList: document.querySelector("#security-summary"),
 };
@@ -20,6 +22,8 @@ const elements = {
 const cards = {
   https: elements.httpsStatus.closest(".status-card"),
   login: elements.loginStatus.closest(".status-card"),
+  authType: elements.authTypeStatus.closest(".status-card"),
+  confidence: elements.confidenceStatus.closest(".status-card"),
   fields: elements.fieldStatus.closest(".status-card"),
 };
 
@@ -73,17 +77,22 @@ function sendAnalyzeMessage(tabId) {
 }
 
 function renderAnalysis(analysis) {
-  const fieldCounts = analysis.fields.counts;
-  const totalTrackedFields = fieldCounts.username + fieldCounts.email + fieldCounts.password;
+  const login = analysis.modules.login;
+  const usernameOrEmailFields = login.usernameFields + login.emailFields;
 
   elements.currentUrl.textContent = analysis.url;
 
   setCard(cards.https, elements.httpsStatus, analysis.security.usesHttps ? "HTTPS" : "Not HTTPS", analysis.security.usesHttps ? "safe" : "danger");
-  setCard(cards.login, elements.loginStatus, analysis.hasLoginForm ? "Detected" : "Not found", analysis.hasLoginForm ? "safe" : "warning");
-  setCard(cards.fields, elements.fieldStatus, `${totalTrackedFields} found`, totalTrackedFields > 0 ? "safe" : "warning");
+  setCard(cards.login, elements.loginStatus, login.authenticationDetected ? "Yes" : "No", login.authenticationDetected ? "safe" : "warning");
+  setCard(cards.authType, elements.authTypeStatus, login.type, login.type === "Unknown" ? "warning" : "safe");
+  setCard(cards.confidence, elements.confidenceStatus, `${login.confidenceScore}%`, getConfidenceState(login.confidenceScore));
+  setCard(cards.fields, elements.fieldStatus, `${login.passwordFields} / ${usernameOrEmailFields}`, login.passwordFields > 0 || usernameOrEmailFields > 0 ? "safe" : "warning");
 
   renderSummary([
     ...analysis.risk.summary,
+    `Password fields: ${login.passwordFields}.`,
+    `Username/email fields: ${usernameOrEmailFields}.`,
+    ...login.reasons.map((reason) => `Reason: ${reason}.`),
     "No forms were submitted and no data left this page.",
   ]);
 }
@@ -91,6 +100,8 @@ function renderAnalysis(analysis) {
 function renderUnsupportedPage(url) {
   setCard(cards.https, elements.httpsStatus, "N/A", "warning");
   setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
+  setCard(cards.authType, elements.authTypeStatus, "N/A", "warning");
+  setCard(cards.confidence, elements.confidenceStatus, "N/A", "warning");
   setCard(cards.fields, elements.fieldStatus, "Unavailable", "warning");
 
   renderSummary([
@@ -102,6 +113,8 @@ function renderUnsupportedPage(url) {
 function renderError(error) {
   setCard(cards.https, elements.httpsStatus, "Error", "danger");
   setCard(cards.login, elements.loginStatus, "Error", "danger");
+  setCard(cards.authType, elements.authTypeStatus, "Error", "danger");
+  setCard(cards.confidence, elements.confidenceStatus, "Error", "danger");
   setCard(cards.fields, elements.fieldStatus, "Error", "danger");
 
   renderSummary([
@@ -123,6 +136,18 @@ function renderSummary(items) {
       return listItem;
     }),
   );
+}
+
+function getConfidenceState(confidenceScore) {
+  if (confidenceScore >= 65) {
+    return "safe";
+  }
+
+  if (confidenceScore >= 50) {
+    return "warning";
+  }
+
+  return "warning";
 }
 
 function isInspectableUrl(url) {

@@ -16,6 +16,11 @@ The project is intentionally defensive. It is designed for systems you own, admi
 - Displays the current page URL.
 - Detects likely login forms on the active page.
 - Detects visible username, email, and password fields.
+- Detects likely submit buttons.
+- Detects SPA-style login areas that do not use a native `<form>` tag.
+- Classifies authentication pages as Login, Registration, or Unknown.
+- Reports authentication confidence as a percentage.
+- Lists detection reasons such as password fields, email fields, submit controls, and matching page titles.
 - Shows a simple security summary in the popup.
 - Runs DOM-only analysis from the browser.
 - Avoids form submission, payload delivery, brute force behavior, and network requests.
@@ -47,7 +52,7 @@ Current module-like areas:
 
 - `src/core/scanner.js`: Coordinates read-only assessment modules.
 - `src/core/risk-engine.js`: Converts module results into a simple summary.
-- `src/modules/login/login-detector.js`: Detects login forms and credential fields.
+- `src/modules/login/login-detector.js`: Login Detection Engine for native forms, SPA-style auth areas, credential fields, submit buttons, authentication page type, confidence scoring, and detection reasons.
 - `src/modules/https/https-checker.js`: Checks the current page URL protocol.
 - `src/utils/dom-utils.js`: Shared DOM helpers for module authors.
 - `src/content/content.js`: Content-script bridge that runs analysis inside the active page.
