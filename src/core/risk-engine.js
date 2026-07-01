@@ -35,6 +35,10 @@
   }
 
   function getOverallLevel(results) {
+    if (Array.isArray(results.findings) && results.findings.length > 0) {
+      return getOverallLevelFromFindings(results.findings);
+    }
+
     const authenticationDetected = results.auth.type !== "Unknown" || results.login.authenticationDetected;
 
     if (!results.https.usesHttps && authenticationDetected) {
@@ -42,6 +46,18 @@
     }
 
     if (!results.https.usesHttps || authenticationDetected) {
+      return "medium";
+    }
+
+    return "low";
+  }
+
+  function getOverallLevelFromFindings(findings) {
+    if (findings.some((finding) => finding.severity === "high" || finding.status === "fail")) {
+      return "high";
+    }
+
+    if (findings.some((finding) => finding.severity === "medium" || finding.status === "warning")) {
       return "medium";
     }
 
