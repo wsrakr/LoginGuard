@@ -1,526 +1,1313 @@
-# LoginGuard
+# LoginGuard PROJECT.md
 
-> **Analyze. Explain. Improve. Never Attack.**
+## 1. Source of Truth
 
-## Project Constitution
-LoginGuard is an open-source defensive browser security platform for understanding authentication-page security through passive, local, and explainable analysis.
+This file is the source of truth for the LoginGuard project.
 
-This document is the main project constitution. It defines what LoginGuard is, what it is not, how it should evolve, and how humans and AI assistants should make future changes.
+Every major product decision, architecture decision, safety boundary, feature direction, module rule, and long-term development plan should be aligned with this document.
 
-## 1. Project Identity
+If another file conflicts with this file, this file wins.
 
-| Field | Value |
-| --- | --- |
-| Name | LoginGuard |
-| Motto | Analyze. Explain. Improve. Never Attack. |
-| Category | Defensive browser security platform |
-| Primary interface | Chrome Extension |
-| Core audience | Developers, students, educators, security teams, and authorized security researchers |
+Related files have narrower roles:
 
-### Short Description
+* `README.md` is the public-facing project introduction.
+* `ROADMAP.md` is the milestone and release planning document.
+* `SECURITY.md` explains responsible disclosure and security boundaries.
+* `CONTRIBUTING.md` explains how others can contribute.
+* `PROJECT.md` defines what LoginGuard is, what it is not, and how it should grow.
 
-LoginGuard helps users analyze authentication-related pages from inside the browser. It explains what it observes, why it matters, and how developers can improve security without attacking websites or collecting sensitive data.
+---
 
-### Long-Term Purpose
+# 2. Project Identity
 
-LoginGuard should become a modular open-source platform for defensive browser security assessment. It should help teams build, teach, review, and document secure authentication experiences while preserving user privacy, consent, and authorization.
+## Project Name
 
-## 2. Mission
+LoginGuard
 
-LoginGuard helps developers, students, and security teams understand authentication-page security through passive, local, explainable analysis.
+## Current Form
 
-The mission is to make common authentication security signals easier to inspect:
+LoginGuard currently starts as a browser extension.
 
-- Authentication page type.
-- Login and registration form structure.
-- HTTPS usage.
-- Security headers.
-- Cookie and session posture.
-- Password-policy signals.
-- Browser-visible defensive controls.
-- Risk and recommendation summaries.
+The first implementation is a Chrome Extension built with Manifest V3. It performs passive, local, browser-based inspection of the active tab after the user opens the extension popup.
 
-LoginGuard should reduce the gap between secure development knowledge and everyday engineering workflows. A user should be able to open a page they are authorized to inspect, click the extension, and receive clear, educational findings.
+## Long-Term Identity
 
-## 3. Vision
+LoginGuard is not only a Chrome extension.
 
-LoginGuard starts as a Chrome Extension, but it should grow into a modular open-source defensive browser security platform.
+LoginGuard is a defensive authentication-surface security assessment ecosystem.
 
-The first interface is intentionally simple: inspect the currently opened page and explain what is visible to the browser. Over time, the project should evolve into a broader ecosystem with reusable engines, modules, reports, plugins, and developer tooling.
+The extension is the first user-facing product, but the long-term project should grow into a modular framework that helps developers, students, security researchers, and security teams understand login page security before credentials are submitted.
 
-The platform must remain grounded in one rule: LoginGuard helps people improve security; it does not help people attack websites.
+---
 
-## 4. What LoginGuard Is
+# 3. One-Sentence Vision
+
+LoginGuard helps users safely inspect login pages, detect risky authentication implementation patterns, and learn secure login design through passive, authorized, browser-based analysis.
+
+---
+
+# 4. Product Vision
+
+LoginGuard should become a practical, educational, and developer-friendly security assistant for authentication surfaces.
+
+The project focuses on login pages, registration pages, password reset flows, MFA/2FA flows, SSO pages, and other authentication-related user interfaces.
+
+The goal is not to attack websites.
+
+The goal is to help people understand whether an authentication page has visible security weaknesses, missing protections, confusing UX patterns, or risky implementation signals.
+
+LoginGuard should be useful for:
+
+* Developers reviewing their own login pages.
+* Students learning web security.
+* Security researchers working in authorized environments.
+* Internal teams performing lightweight authentication surface reviews.
+* Educators demonstrating secure login design.
+* Bug bounty learners working only within authorized scope.
+* Open-source maintainers who want a safer authentication checklist.
+
+---
+
+# 5. Core Principles
+
+## 5.1 Defensive First
+
+LoginGuard is a defensive tool.
+
+Every feature should help users understand, improve, document, or teach secure authentication.
+
+LoginGuard must not become an offensive exploitation toolkit.
+
+## 5.2 Authorization Required
+
+LoginGuard should only be used on systems the user owns, administers, studies in a lab, or has explicit permission to assess.
+
+The project should repeatedly communicate this boundary in documentation and UI where appropriate.
+
+## 5.3 Passive by Default
+
+The default behavior must be passive.
+
+Passive means:
+
+* No form submission.
+* No credential collection.
+* No password interception.
+* No brute force.
+* No exploit payloads.
+* No hidden network requests.
+* No scanning unrelated pages.
+* No bypass attempts.
+* No automated interaction with authentication systems.
+
+## 5.4 Local First
+
+LoginGuard should process findings locally whenever possible.
+
+The extension should not send inspected page data to external services by default.
+
+If future versions ever introduce optional cloud features, they must be explicit, documented, opt-in, privacy-preserving, and safe.
+
+## 5.5 Explain, Do Not Exploit
+
+LoginGuard should explain risks and give remediation guidance.
+
+It should not provide instructions that help attack third-party systems.
+
+Findings should be written for defensive use:
+
+* What was detected?
+* Why does it matter?
+* What is the risk?
+* How can a developer fix it?
+* How confident is the detection?
+
+## 5.6 Modular Architecture
+
+LoginGuard should grow through small, focused modules.
+
+Each module should inspect one area of the page or browser-observable security posture and return structured findings.
+
+## 5.7 Educational Value
+
+LoginGuard should teach while it scans.
+
+Every finding should help the user learn secure authentication concepts.
+
+The long-term project should include labs, fixtures, examples, documentation, and beginner-friendly explanations.
+
+---
+
+# 6. What LoginGuard Is
 
 LoginGuard is:
 
-| Identity | Meaning |
-| --- | --- |
-| Defensive security tool | It helps users understand and improve security posture. |
-| Educational project | It teaches why findings matter and how to reason about them. |
-| Browser security assessment platform | It analyzes browser-visible authentication-page signals. |
-| Modular framework | It organizes checks as isolated modules with structured outputs. |
-| Open-source community project | It welcomes safe, documented, beginner-friendly contributions. |
+* A browser-based authentication security assessment framework.
+* A Chrome Extension in its first implementation.
+* A passive login page inspection tool.
+* A modular security education project.
+* A local-first defensive analysis system.
+* A project for authorized testing only.
+* A long-term ecosystem around authentication security.
 
-## 5. What LoginGuard Is Not
+---
+
+# 7. What LoginGuard Is Not
 
 LoginGuard is not:
 
-- An exploitation framework.
-- A brute-force tool.
-- A credential stuffing tool.
-- A phishing toolkit.
-- Malware.
-- Spyware.
-- An automated attack platform.
-- A payload delivery tool.
-- A vulnerability weaponization system.
-- A tool for unauthorized testing.
+* A hacking tool.
+* A phishing tool.
+* A credential harvester.
+* A brute-force tool.
+* A vulnerability exploitation framework.
+* A scanner for attacking third-party websites.
+* A tool for bypassing authentication.
+* A tool for stealing, storing, or transmitting passwords.
+* A replacement for professional penetration testing.
+* A guarantee that a login page is secure.
 
-LoginGuard must never be framed, designed, documented, or extended as an offensive platform.
+---
 
-## 6. Non-Negotiable Security Rules
+# 8. Current Project State
 
-These rules are permanent project boundaries.
+The current project is a Chrome Extension with a modular structure.
 
-| Rule | Requirement |
-| --- | --- |
-| Never submit forms | Modules must not trigger login, registration, recovery, MFA, or other form submissions. |
-| Never collect credentials | Modules must not read, store, display, or transmit user-entered secrets. |
-| Never store secrets | No passwords, tokens, session values, API keys, or one-time codes may be stored. |
-| Never exfiltrate data | Findings must remain local unless a future explicit export action is user-controlled. |
-| Never automate attacks | No scanning pattern may become an attack workflow. |
-| Never perform brute force | No guessing, spraying, credential stuffing, enumeration, or retry automation. |
-| Never inject offensive payloads | No payload delivery, exploit strings, or attack probes. |
-| Never modify target pages destructively | Modules should observe, not change page state or user data. |
-| Only analyze the currently opened page | Default behavior is active-tab, user-initiated analysis. |
-| Prioritize consent and authorization | LoginGuard is for systems the user owns, administers, studies in a lab, or has permission to assess. |
+Current capabilities include:
 
-If a proposed feature conflicts with these rules, it does not belong in LoginGuard.
+* Detecting whether the current page uses HTTPS.
+* Displaying the current page URL.
+* Detecting likely login forms.
+* Detecting username, email, and password fields.
+* Detecting likely submit buttons.
+* Detecting SPA-style login areas that do not use a native form tag.
+* Classifying authentication-related pages.
+* Estimating authentication confidence.
+* Listing detection reasons.
+* Checking common security headers when browser-observed response headers are available.
+* Showing present or missing security header status.
+* Providing short recommendations.
+* Running passive browser-based analysis from the current active tab.
+* Avoiding form submission, payload delivery, brute force behavior, and active attack workflows.
 
-## 7. Product Tracks
+Current module-like areas include:
 
-LoginGuard has two product tracks: a lightweight user-facing extension and a reusable core platform.
+* `src/core/scanner.js`
+* `src/core/risk-engine.js`
+* `src/modules/auth/auth-classifier.js`
+* `src/modules/headers/header-scanner.js`
+* `src/modules/login/login-detector.js`
+* `src/modules/https/https-checker.js`
+* `src/utils/dom-utils.js`
+* `src/content/content.js`
+* `src/popup/popup.js`
 
-### LoginGuard Lite
+---
 
-LoginGuard Lite is the simple Chrome Extension experience.
+# 9. Long-Term Ecosystem Direction
 
-| Capability | Purpose |
-| --- | --- |
-| Authentication detection | Identify likely authentication surfaces. |
-| Authentication classification | Classify Login, Registration, Password Recovery, Password Reset, MFA / 2FA, SSO, or Unknown. |
-| HTTPS check | Explain whether the current page uses HTTPS. |
-| Security headers | Show common security headers as Present / Missing. |
-| Cookies | Review browser-visible cookie security attributes. |
-| Basic risk score | Summarize observed issues with explainable severity. |
-| Recommendations | Provide short developer-focused improvements. |
-| Reports | Export local findings for authorized review. |
+LoginGuard should grow in phases.
 
-### LoginGuard Core
+The Chrome extension is Phase 1.
 
-LoginGuard Core is the future reusable platform foundation.
+The future ecosystem may include:
 
-| Component | Purpose |
-| --- | --- |
-| Modular framework | Shared structure for modules, engines, and outputs. |
-| Scanner engine | Coordinates page analysis and module execution. |
-| Module system | Defines module contracts, lifecycle, and boundaries. |
-| Risk engine | Converts module findings into severity and score. |
-| Recommendation engine | Explains what to improve and why. |
-| Report engine | Produces local, privacy-aware reports. |
-| Future Plugin SDK | Enables reviewed defensive third-party modules. |
-| Future CLI | Supports repeatable local analysis workflows. |
-| Future dashboard | Helps review findings and reports over time. |
+1. Browser Extension
+2. Module Framework
+3. Local Report Generator
+4. Educational Lab Pages
+5. Secure Login Checklist
+6. Authentication Pattern Library
+7. Developer Documentation
+8. Test Fixtures
+9. Example Vulnerable and Secure Login Pages
+10. CLI Companion Tool
+11. Local Desktop Dashboard
+12. Browser Compatibility Layer
+13. Security Learning Mode
+14. Team/Teaching Mode
+15. Optional Integrations for Authorized Internal Use
 
-## 8. Architecture Principles
+Not all of these must be built immediately.
 
-LoginGuard architecture should be modular, explainable, and conservative.
+The project should grow slowly, safely, and consistently.
 
-| Principle | Meaning |
-| --- | --- |
-| Modular design | Each capability lives in a focused module or engine. |
-| Single responsibility modules | A module should do one thing and return structured results. |
-| Passive local analysis | Modules inspect current browser-visible state without attacking or modifying the target. |
-| UI separated from scanner logic | Popup rendering must not contain core detection logic. |
-| Structured module results | Modules return serializable objects with findings, reasons, and recommendations. |
-| Risk engine consumes module outputs | Risk scoring should aggregate module results without duplicating module internals. |
-| Recommendations explain why | Every recommendation should connect to an observed signal. |
+---
 
-```mermaid
-flowchart LR
-  Popup[Popup]
-  Scanner[Scanner]
-  Modules[Modules]
-  Risk[Risk Engine]
-  Recommendations[Recommendations]
-  Reports[Report Engine]
+# 10. Product Layers
 
-  Popup --> Scanner
-  Scanner --> Modules
-  Modules --> Risk
-  Risk --> Recommendations
-  Recommendations --> Reports
+## 10.1 Extension Layer
+
+The extension is the primary user-facing interface.
+
+Responsibilities:
+
+* Analyze the current active tab.
+* Show a clear security summary.
+* Display module findings.
+* Explain detected risks.
+* Provide remediation guidance.
+* Keep analysis local.
+* Avoid unsafe behavior.
+
+## 10.2 Core Engine Layer
+
+The core engine coordinates modules.
+
+Responsibilities:
+
+* Run modules safely.
+* Normalize module results.
+* Combine findings.
+* Calculate summary state.
+* Manage confidence scoring.
+* Prevent side effects.
+* Keep the module interface stable.
+
+## 10.3 Module Layer
+
+Modules perform focused checks.
+
+A module should:
+
+* Inspect one topic.
+* Return structured data.
+* Avoid side effects.
+* Avoid network activity unless explicitly allowed by a future safe design.
+* Include confidence.
+* Include remediation guidance.
+* Be independently testable.
+
+## 10.4 Risk Engine Layer
+
+The risk engine converts module results into user-facing meaning.
+
+Responsibilities:
+
+* Assign severity.
+* Group findings.
+* Summarize overall posture.
+* Avoid overstating certainty.
+* Distinguish between confirmed findings and weak signals.
+* Produce beginner-friendly explanations.
+
+## 10.5 Reporting Layer
+
+The reporting layer should eventually generate local reports.
+
+Reports should include:
+
+* Page URL.
+* Scan timestamp.
+* Module results.
+* Findings.
+* Severity.
+* Confidence.
+* Evidence.
+* Remediation.
+* Safety disclaimer.
+* Scope reminder.
+
+Reports should be local-first.
+
+## 10.6 Education Layer
+
+The education layer should help users learn.
+
+It may include:
+
+* Secure login checklist.
+* Example login pages.
+* Safe lab pages.
+* Explanations of headers.
+* Explanations of MFA/2FA.
+* Explanations of authentication UX.
+* Documentation for students.
+* Documentation for developers.
+
+---
+
+# 11. Safety Boundaries
+
+LoginGuard must not include:
+
+* Credential capture.
+* Password logging.
+* Token stealing.
+* Cookie stealing.
+* Session hijacking.
+* Brute-force logic.
+* Password spraying.
+* Exploit payloads.
+* SQL injection payload delivery.
+* XSS payload delivery.
+* CSRF attack automation.
+* CAPTCHA bypass.
+* MFA bypass.
+* Phishing page generation.
+* Form auto-submission.
+* Hidden background scanning.
+* Unauthorized data exfiltration.
+* Stealth behavior.
+* Evasion behavior.
+* Any feature designed to attack third-party systems.
+
+LoginGuard may include:
+
+* Passive DOM inspection.
+* Passive URL inspection.
+* Passive protocol checks.
+* Browser-observed security header checks.
+* Local-only reporting.
+* Educational explanations.
+* Secure development recommendations.
+* Authorized lab support.
+* Test fixtures.
+* Defensive checklists.
+
+---
+
+# 12. Permission Philosophy
+
+The extension should request the minimum permissions needed for the current feature set.
+
+Every permission must have a clear reason.
+
+Current permission categories may include:
+
+* `activeTab` for analyzing the current active page after user action.
+* `scripting` for injecting read-only analysis logic.
+* `webRequest` for observing completed main-frame response headers.
+* `storage` for short-lived local/session state.
+* Host permissions only when required for browser-observed security header visibility.
+
+Permissions must not be used for hidden scanning or unauthorized monitoring.
+
+---
+
+# 13. Privacy Philosophy
+
+LoginGuard should not collect credentials.
+
+LoginGuard should not store passwords.
+
+LoginGuard should not transmit page data externally by default.
+
+LoginGuard should avoid storing sensitive page content.
+
+If future features require storing reports, reports should be:
+
+* Local by default.
+* User-controlled.
+* Clear about what is included.
+* Easy to delete.
+* Free from credentials and secrets.
+
+---
+
+# 14. Module Design Standard
+
+Every module should follow this conceptual interface:
+
+```js
+{
+  id: "module-id",
+  name: "Human Readable Module Name",
+  category: "authentication | headers | ux | privacy | accessibility | education",
+  run(context) {
+    return {
+      status: "pass | warning | fail | info | unknown",
+      severity: "info | low | medium | high",
+      confidence: 0-100,
+      title: "Finding title",
+      summary: "Short explanation",
+      evidence: [],
+      remediation: "How to fix or improve this",
+      references: []
+    };
+  }
+}
 ```
 
-## 9. Module Rules
+This exact interface may evolve, but the principle should remain stable.
 
-Every module must define and document:
+Modules should return structured findings, not random strings.
 
-| Field | Requirement |
-| --- | --- |
-| Purpose | What the module checks and why it exists. |
-| Inputs | What browser-visible data the module reads. |
-| Outputs | The structured result shape returned by the module. |
-| Responsibilities | What the module owns and what it does not own. |
-| Privacy impact | What data is accessed and how sensitive data is avoided. |
-| Security boundaries | How the module remains passive and defensive. |
-| Recommendations | What remediation guidance the module can produce. |
+---
 
-### Current and Future Modules
+# 15. Finding Quality Standard
 
-| Module | Role |
-| --- | --- |
-| Authentication | Detect and classify authentication-related pages. |
-| Headers | Inspect common security headers when available. |
-| Cookies | Review browser-visible cookie security attributes. |
-| Password Policy | Analyze visible password policy and UX indicators without reading entered passwords. |
-| CSRF Indicators | Detect passive indicators of CSRF protections without submitting forms. |
-| JWT | Identify safe browser-visible JWT storage signals without collecting token values. |
-| Session | Review session-management indicators and cookie posture. |
-| Storage | Inspect local/session storage usage patterns without exfiltrating values. |
-| CORS | Explain browser-visible CORS-related signals where available. |
-| TLS | Summarize browser-visible transport security context. |
-| Reports | Create local, user-controlled reports. |
-| Plugins | Support reviewed defensive extensions to the module ecosystem. |
+Every finding should answer:
 
-## 10. Development Workflow
+1. What did LoginGuard detect?
+2. Why does it matter?
+3. How confident is the result?
+4. What evidence supports the result?
+5. What should a developer do next?
+6. Is this a confirmed issue or only a signal?
 
-Use this process for meaningful changes:
+Bad finding:
 
-1. Plan the change and identify the affected modules or docs.
-2. Design the data flow, result shape, privacy impact, and UI impact.
-3. Implement the smallest focused change that satisfies the goal.
-4. Review for security boundaries, readability, and maintainability.
-5. Test in Chrome with pages you own or are authorized to inspect.
-6. Commit with a clear Conventional Commit message.
-7. Push to the appropriate branch.
-8. Update docs when behavior, architecture, permissions, or module contracts change.
+> Security header missing.
 
-For documentation-only changes, still review the security language and project direction.
+Good finding:
 
-## 11. Git Standards
+> Content-Security-Policy was not observed in the browser response headers. CSP helps reduce the impact of certain injection issues by restricting which scripts, styles, and resources the browser is allowed to load. Add a strict CSP policy and test it carefully in report-only mode before enforcing it.
 
-LoginGuard uses Conventional Commits.
+---
 
-| Prefix | Use |
-| --- | --- |
-| `feat:` | New user-facing capability or module behavior. |
-| `fix:` | Bug fix. |
-| `docs:` | Documentation-only change. |
-| `refactor:` | Internal restructuring without behavior change. |
-| `test:` | Test additions or changes. |
-| `chore:` | Maintenance tasks. |
+# 16. Severity Model
+
+LoginGuard should use a conservative severity model.
+
+Severity should not exaggerate.
+
+Suggested severity levels:
+
+## Info
+
+Useful information, not necessarily a risk.
+
+## Low
+
+Minor weakness or missing best practice.
+
+## Medium
+
+Meaningful security concern that should be reviewed.
+
+## High
+
+Important risk signal that may expose users or authentication flows to serious issues.
+
+## Unknown
+
+Insufficient evidence.
+
+The tool should avoid claiming “vulnerable” unless the evidence is strong.
+
+Preferred language:
+
+* “Missing”
+* “Not observed”
+* “Potentially risky”
+* “Review recommended”
+* “May indicate”
+* “Detected signal”
+
+Avoid careless language:
+
+* “Exploitable”
+* “Definitely vulnerable”
+* “Can be hacked”
+* “Critical” without proof
+
+---
+
+# 17. Confidence Model
+
+Confidence should show how reliable a finding is.
+
+Suggested model:
+
+* 90–100: Strong evidence.
+* 70–89: Good evidence.
+* 40–69: Partial evidence.
+* 1–39: Weak signal.
+* 0: Unknown or not enough information.
+
+Confidence is not severity.
+
+A high-confidence low-severity finding is possible.
+
+A low-confidence medium-severity finding is also possible.
+
+---
+
+# 18. Initial Module Categories
+
+## 18.1 HTTPS Module
+
+Checks whether the current page is loaded over HTTPS.
+
+Possible findings:
+
+* HTTPS used.
+* HTTP used.
+* Localhost/lab context detected.
+* Mixed context warning, if detectable later.
+
+## 18.2 Login Detection Module
+
+Detects whether the page appears to contain an authentication form or authentication area.
+
+Signals:
+
+* Password field.
+* Email field.
+* Username field.
+* Submit button.
+* Form element.
+* SPA login container.
+* Login-related labels.
+* Login-related placeholders.
+* Login-related headings.
+* Login-related URL paths.
+
+## 18.3 Authentication Classifier Module
+
+Classifies page type.
+
+Possible categories:
+
+* Login
+* Registration
+* Password Recovery
+* Password Reset
+* MFA / 2FA
+* SSO
+* Unknown
+
+## 18.4 Security Headers Module
+
+Checks browser-observed security headers where available.
+
+Possible headers:
+
+* Content-Security-Policy
+* Strict-Transport-Security
+* X-Frame-Options
+* X-Content-Type-Options
+* Referrer-Policy
+* Permissions-Policy
+* Cross-Origin-Opener-Policy
+* Cross-Origin-Resource-Policy
+* Cross-Origin-Embedder-Policy
+
+## 18.5 Secure UX Module
+
+Future module for login UX safety.
+
+Possible checks:
+
+* Password visibility toggle clarity.
+* Clear submit button.
+* Dangerous autocomplete patterns.
+* Missing password manager compatibility hints.
+* Confusing login/register flows.
+* Insecure copywriting signals.
+
+## 18.6 Accessibility Module
+
+Future module for authentication accessibility.
+
+Possible checks:
+
+* Labels connected to inputs.
+* Keyboard navigability.
+* Focus order.
+* Button names.
+* Error message accessibility.
+* ARIA misuse.
+* Color contrast.
+
+## 18.7 Privacy Module
+
+Future module for privacy-related signals.
+
+Possible checks:
+
+* Third-party scripts on login pages.
+* Excessive trackers on auth pages.
+* Suspicious external resources.
+* Unclear privacy links.
+
+This module must remain passive.
+
+---
+
+# 19. Recommended Repository Structure
+
+Long-term structure may evolve toward:
+
+```text
+.
+|-- manifest.json
+|-- README.md
+|-- PROJECT.md
+|-- ROADMAP.md
+|-- SECURITY.md
+|-- CONTRIBUTING.md
+|-- CHANGELOG.md
+|-- LICENSE
+|-- assets/
+|   `-- icons/
+|-- docs/
+|   |-- architecture.md
+|   |-- module-authoring.md
+|   |-- finding-model.md
+|   |-- security-boundaries.md
+|   |-- secure-login-checklist.md
+|   |-- labs.md
+|   `-- examples.md
+|-- fixtures/
+|   |-- login-basic/
+|   |-- login-spa/
+|   |-- register-basic/
+|   |-- password-reset/
+|   |-- mfa/
+|   `-- insecure-examples/
+|-- src/
+|   |-- background/
+|   |-- content/
+|   |-- core/
+|   |-- modules/
+|   |   |-- auth/
+|   |   |-- headers/
+|   |   |-- https/
+|   |   |-- login/
+|   |   |-- ux/
+|   |   |-- accessibility/
+|   |   `-- privacy/
+|   |-- popup/
+|   |-- reporting/
+|   |-- storage/
+|   `-- utils/
+`-- tests/
+    |-- unit/
+    |-- fixtures/
+    `-- integration/
+```
+
+The current repository does not need to immediately match this structure.
+
+This is the long-term direction.
+
+---
+
+# 20. Six-Month Development Direction
+
+The project should be developed slowly and consistently over at least six months.
+
+The goal is not to add many random features.
+
+The goal is to build a serious, clean, defensible, documented security project.
+
+## Month 1: Foundation and Cleanup
+
+Focus:
+
+* Stabilize current extension.
+* Clean architecture.
+* Improve naming.
+* Make current modules reliable.
+* Improve README, PROJECT, ROADMAP, SECURITY.
+* Create basic test fixtures.
+* Document current behavior.
+* Ensure all safety boundaries are clear.
+
+Deliverables:
+
+* Stable extension loading in Chrome.
+* Clear popup UI.
+* Clean module folders.
+* Updated documentation.
+* First test pages.
+* Basic manual test checklist.
+
+## Month 2: Module System
+
+Focus:
+
+* Formalize module interface.
+* Add module registry.
+* Normalize findings.
+* Add severity and confidence.
+* Improve risk engine.
+* Make rendering module-independent.
+* Add module authoring documentation.
+
+Deliverables:
+
+* Module contract.
+* Module registry.
+* Finding schema.
+* Better UI rendering.
+* Developer docs.
+
+## Month 3: Assessment Quality
+
+Focus:
+
+* Improve login detection accuracy.
+* Improve authentication classification.
+* Improve security header explanations.
+* Add remediation text.
+* Add evidence display.
+* Add confidence scoring.
+* Reduce false positives.
+
+Deliverables:
+
+* Better login detector.
+* Better auth classifier.
+* Better header scanner.
+* Structured findings.
+* Improved popup explanations.
+
+## Month 4: Reporting and Labs
+
+Focus:
+
+* Add local-only report export.
+* Add lab pages.
+* Add secure and insecure examples.
+* Add educational walkthroughs.
+* Add secure login checklist.
+* Add report templates.
+
+Deliverables:
+
+* Local JSON report.
+* Local HTML or Markdown report.
+* Fixture pages.
+* Documentation for students.
+* Secure login checklist.
+
+## Month 5: UX, Accessibility, and Privacy Modules
+
+Focus:
+
+* Add secure UX checks.
+* Add accessibility checks.
+* Add passive privacy/resource checks.
+* Improve popup design.
+* Improve finding grouping.
+* Add filtering by severity/category.
+
+Deliverables:
+
+* UX module.
+* Accessibility module.
+* Privacy signal module.
+* Cleaner UI.
+* Better educational explanations.
+
+## Month 6: Stabilization and Public Quality
+
+Focus:
+
+* Testing.
+* Documentation.
+* Refactoring.
+* Bug fixes.
+* Release preparation.
+* Contribution readiness.
+* Browser compatibility notes.
+* Demo material.
+
+Deliverables:
+
+* v0.1 release candidate.
+* Complete README.
+* Complete PROJECT.
+* Complete ROADMAP.
+* Complete SECURITY.
+* Complete CONTRIBUTING.
+* Demo screenshots.
+* Example reports.
+* Issue templates.
+
+---
+
+# 21. Daily Development Rule
+
+This project is intended to be developed daily or near-daily.
+
+Each development session should produce at least one of the following:
+
+* A small code improvement.
+* A documentation improvement.
+* A test fixture.
+* A bug fix.
+* A UI improvement.
+* A module improvement.
+* A clearer finding.
+* A safer boundary.
+* A better example.
+* A cleaned-up file.
+* A GitHub issue.
+* A commit.
+
+Small consistent progress is preferred over large unfocused rewrites.
+
+---
+
+# 22. Suggested Daily Workflow
+
+Use this workflow when returning to the project:
+
+1. Read `PROJECT.md`.
+2. Check `ROADMAP.md`.
+3. Pick one small task.
+4. Create or update an issue.
+5. Make the change.
+6. Test manually.
+7. Update documentation if needed.
+8. Commit with a clear message.
+9. Write what changed in `CHANGELOG.md` if relevant.
+10. Decide the next small task.
+
+---
+
+# 23. AI Assistant Usage Rule
+
+When using ChatGPT, Claude, Copilot, or another AI assistant, provide the assistant with:
+
+1. The GitHub repository link.
+2. The current task.
+3. The relevant files.
+4. This `PROJECT.md`.
+5. The safety boundaries.
+
+AI assistants should treat `PROJECT.md` as the source of truth.
+
+Do not ask an AI assistant to add offensive features.
+
+Do not ask for hidden scanning, credential capture, exploit payloads, brute force, bypass logic, or phishing behavior.
+
+Good AI prompt pattern:
+
+```text
+You are helping me develop LoginGuard.
+
+Repository:
+https://github.com/wsrakr/LoginGuard
+
+Treat PROJECT.md as the source of truth.
+
+Current task:
+[describe one small task]
+
+Rules:
+- Defensive use only.
+- Passive analysis only unless PROJECT.md explicitly allows otherwise.
+- No credential collection.
+- No form submission.
+- No exploit payloads.
+- No brute force.
+- Keep code modular.
+- Update documentation if needed.
+
+Relevant files:
+[paste files]
+```
+
+---
+
+# 24. Coding Standards
+
+LoginGuard code should be:
+
+* Clear.
+* Modular.
+* Readable.
+* Defensive.
+* Easy to test.
+* Easy to explain.
+* Conservative in claims.
+* Free from hidden behavior.
+
+Prefer:
+
+* Small functions.
+* Clear names.
+* Structured return objects.
+* Comments where logic is subtle.
+* Consistent module format.
+* Explicit safety checks.
+
+Avoid:
+
+* Large unstructured files.
+* Unclear magic values.
+* Overconfident security claims.
+* Hidden side effects.
+* Unnecessary permissions.
+* Remote dependencies without reason.
+* Mixing UI, scanning logic, and risk logic in the same place.
+
+---
+
+# 25. Documentation Standards
+
+Documentation should be beginner-friendly but technically correct.
+
+Every major feature should explain:
+
+* What it does.
+* Why it exists.
+* How it works at a high level.
+* What it does not do.
+* What the safety boundary is.
+* How to test it.
+* How to interpret results.
+
+Documentation should avoid hype.
+
+Preferred tone:
+
+* Clear.
+* Honest.
+* Defensive.
+* Educational.
+* Practical.
+
+---
+
+# 26. UI/UX Direction
+
+The popup UI should be clear and calm.
+
+It should not scare users.
+
+It should not claim a page is “safe” or “hacked.”
+
+Suggested UI sections:
+
+1. Page Summary
+2. Authentication Detection
+3. Security Headers
+4. Findings
+5. Recommendations
+6. Export / Copy Report
+7. Learning Notes
+
+Suggested labels:
+
+* Good
+* Review
+* Warning
+* Not Observed
+* Unknown
+* Needs Attention
+
+Avoid labels like:
+
+* Hacked
+* Exploitable
+* Dangerous
+* Critical
+* Unsafe
+
+unless strong evidence and careful wording exist.
+
+---
+
+# 27. Testing Philosophy
+
+LoginGuard needs tests because login pages vary a lot.
+
+Testing should include:
+
+* Native form login pages.
+* SPA login pages.
+* Registration pages.
+* Password reset pages.
+* MFA pages.
+* SSO pages.
+* Pages with no login.
+* Pages with misleading text.
+* Pages with multiple forms.
+* Pages with hidden fields.
+* Pages with accessibility issues.
+* Pages with different header combinations.
+
+Fixtures should be local and safe.
+
+---
+
+# 28. Local Fixtures
+
+The project should include local test pages.
+
+Example fixture categories:
+
+```text
+fixtures/
+|-- login-basic/
+|-- login-no-form/
+|-- login-spa/
+|-- register-basic/
+|-- password-reset/
+|-- mfa-basic/
+|-- sso-basic/
+|-- no-login/
+|-- weak-headers/
+|-- good-headers/
+`-- accessibility-cases/
+```
+
+Fixtures should not include real credentials.
+
+Fixtures should not send data anywhere.
+
+---
+
+# 29. Report Design
+
+Future reports should be local-only by default.
+
+A report may include:
+
+* Project name.
+* Scan timestamp.
+* Page URL.
+* Browser context.
+* Overall summary.
+* Findings by category.
+* Severity.
+* Confidence.
+* Evidence.
+* Remediation.
+* Safety note.
+* Scope reminder.
+
+A report should not include:
+
+* Passwords.
+* Tokens.
+* Cookies.
+* Session IDs.
+* Full page HTML unless explicitly and safely handled.
+* Sensitive form values.
+
+---
+
+# 30. Versioning Direction
+
+Before a public release, LoginGuard can use internal milestone labels.
+
+Suggested versions:
+
+* `v0.0.x` early development
+* `v0.1.0` first stable educational extension
+* `v0.2.0` module system release
+* `v0.3.0` reporting and labs release
+* `v0.4.0` UX/accessibility/privacy modules
+* `v1.0.0` mature defensive framework release
+
+Do not rush `v1.0.0`.
+
+---
+
+# 31. GitHub Issue Strategy
+
+Use GitHub Issues as the project task board.
+
+Suggested labels:
+
+* `type: feature`
+* `type: bug`
+* `type: docs`
+* `type: refactor`
+* `type: test`
+* `type: ui`
+* `type: security-boundary`
+* `area: extension`
+* `area: core`
+* `area: module`
+* `area: popup`
+* `area: docs`
+* `priority: low`
+* `priority: medium`
+* `priority: high`
+* `good first issue`
+
+Every issue should be small enough to complete in a focused session.
+
+---
+
+# 32. Commit Style
+
+Use clear commit messages.
 
 Examples:
 
 ```text
-feat: add cookie analyzer
-docs: update security model
-refactor: improve scanner architecture
+docs: expand project vision and safety boundaries
+feat: add module registry skeleton
+refactor: normalize login detector result format
+fix: handle pages without document forms
+test: add fixture for SPA login page
+ui: improve findings layout in popup
 ```
 
-## 12. Documentation Philosophy
+---
+
+# 33. Contribution Rules
+
+Good contributions:
+
+* Improve passive detection.
+* Improve documentation.
+* Improve tests.
+* Improve fixtures.
+* Improve UI clarity.
+* Improve accessibility.
+* Improve remediation guidance.
+* Improve module architecture.
+* Improve safety boundaries.
+
+Rejected contribution types:
+
+* Credential capture.
+* Offensive payloads.
+* Brute force logic.
+* Form submission automation.
+* Unauthorized scanning.
+* Hidden network activity.
+* Evasion logic.
+* Phishing support.
+* Exploit chains.
+
+---
+
+# 34. Ethical Use Statement
+
+LoginGuard must only be used in authorized, defensive, educational, or research contexts.
+
+Appropriate use cases:
+
+* Reviewing your own application.
+* Testing a local lab page.
+* Assessing an internal system with permission.
+* Learning secure authentication design.
+* Teaching web security concepts.
+* Preparing defensive documentation.
+
+Inappropriate use cases:
+
+* Testing random websites without permission.
+* Attempting to bypass login systems.
+* Collecting credentials.
+* Automating attacks.
+* Running scans outside authorized scope.
+* Using findings to harm users or organizations.
+
+---
+
+# 35. Future Ideas Backlog
+
+These are possible future ideas, not immediate tasks.
+
+## Extension Features
+
+* Finding detail pages.
+* Copy summary button.
+* Export JSON report.
+* Export Markdown report.
+* Export HTML report.
+* Per-module enable/disable.
+* Learning mode.
+* Developer mode.
+* Severity filters.
+* Confidence filters.
+* Module details panel.
+* Local scan history with privacy controls.
 
-Documentation must explain:
+## Module Ideas
 
-- What the feature does.
-- Why it matters.
-- How it works.
-- What it does not do.
-- Privacy and security impact.
-- Permission changes, when relevant.
-- Limitations and assumptions.
+* HTTPS checker.
+* Security headers checker.
+* Login form detector.
+* Auth page classifier.
+* MFA page detector.
+* SSO detector.
+* Password reset flow detector.
+* Secure UX checker.
+* Accessibility checker.
+* Third-party resource signal checker.
+* Password manager compatibility checker.
+* Autocomplete attribute checker.
+* Form label quality checker.
+* Error message pattern checker.
 
-Good documentation should be useful to new contributors, maintainers, security reviewers, and future AI assistants.
+## Documentation Ideas
 
-## 13. UI Philosophy
+* Architecture guide.
+* Module authoring guide.
+* Secure login checklist.
+* Security header explanations.
+* Authentication UX guide.
+* Student lab guide.
+* Local testing guide.
+* Browser permissions guide.
+* Report interpretation guide.
 
-The popup should be:
+## Ecosystem Ideas
 
-- Simple.
-- Fast.
-- Readable.
-- Educational.
-- Explainable.
-- Not scary.
-- Useful for repeated developer workflows.
+* Local demo site.
+* Educational labs.
+* CLI companion.
+* Desktop dashboard.
+* Browser compatibility layer.
+* Teaching mode.
+* Example secure login implementations.
+* Example insecure login implementations for local labs only.
 
-The UI should avoid alarmist language. It should distinguish observed facts from recommendations and should explain confidence, severity, and uncertainty.
+---
 
-## 14. Risk Engine Philosophy
+# 36. Near-Term Priority List
 
-Risk scores must be explainable.
+The next priorities should be:
 
-Rules:
+1. Make the project identity clear.
+2. Keep the extension stable.
+3. Formalize module output.
+4. Add severity and confidence model.
+5. Improve popup rendering.
+6. Add local test fixtures.
+7. Add local-only report export.
+8. Expand documentation.
+9. Prepare a clean `v0.1.0` release.
+10. Keep safety boundaries strict.
 
-- Never show risk without reasons.
-- Never exaggerate findings.
-- Never imply exploitation occurred.
-- Distinguish missing signals from confirmed vulnerabilities.
-- Prefer clear remediation over vague warnings.
+---
 
-Use clear severity levels:
+# 37. Decision Rule
 
-| Severity | Meaning |
-| --- | --- |
-| Info | Helpful context or neutral observation. |
-| Low | Minor improvement opportunity. |
-| Medium | Meaningful security hardening gap. |
-| High | Important issue likely to affect authentication security. |
-| Critical | Severe condition requiring immediate review. |
+When deciding whether to add a feature, ask:
 
-Critical severity should be rare and must require strong evidence.
+1. Is it defensive?
+2. Is it authorized-use only?
+3. Is it passive by default?
+4. Does it avoid collecting credentials?
+5. Does it avoid form submission?
+6. Does it avoid offensive payloads?
+7. Does it help developers, students, or defenders?
+8. Can it be explained clearly?
+9. Can it be tested safely?
+10. Does it fit the long-term LoginGuard ecosystem?
 
-## 15. Ethics and Privacy
+If the answer is no, do not add the feature.
 
-LoginGuard follows an authorization-first security model.
+---
 
-Ethical commitments:
+# 38. Final Direction
 
-- Authorization first.
-- Privacy by design.
-- No telemetry by default.
-- Local-first analysis.
-- No credential handling.
-- Responsible disclosure mindset.
-- Educational explanations over fear-based messaging.
+LoginGuard should become a serious, clean, safe, educational, and modular authentication security assessment ecosystem.
 
-LoginGuard should help users improve systems they own, administer, study in a lab, or have explicit permission to assess.
+The project should grow through disciplined daily progress.
 
-## 16. Future Roadmap
+The extension is the beginning.
 
-| Version | Focus |
-| --- | --- |
-| v0.1 | Authentication Detection |
-| v0.2 | Authentication Classification |
-| v0.3 | Security Headers |
-| v0.4 | Cookie Analyzer |
-| v0.5 | Risk Engine Improvements |
-| v0.6 | Recommendation Engine |
-| v0.7 | Report Export |
-| v0.8 | Plugin Architecture |
-| v1.0 | Stable Chrome Extension |
+The long-term value is the framework, the modules, the learning material, the reports, the fixtures, and the defensive mindset around authentication security.
 
-Future platform work:
+Keep the project safe.
 
-- CLI.
-- Web Dashboard.
-- Plugin SDK.
-- Community Modules.
-- Documentation Website.
-- Optional Lab Mode for local/CTF environments only.
+Keep the project useful.
 
-Lab Mode must never become an excuse to add unauthorized or offensive functionality to the default product.
+Keep the project modular.
 
-## 17. AI Assistant Instructions
-
-This section is for ChatGPT, Codex, and other AI coding assistants working on LoginGuard.
-
-Before making changes:
-
-1. Read `PROJECT.md`.
-2. Preserve passive analysis.
-3. Do not add offensive functionality.
-4. Keep modules isolated.
-5. Update docs when behavior changes.
-6. Prefer small focused changes.
-7. Explain architectural decisions.
-8. Ask before changing project direction.
-
-AI assistants must not:
-
-- Add payloads.
-- Add brute force behavior.
-- Add credential collection.
-- Add form submission automation.
-- Add hidden network requests.
-- Reframe LoginGuard as an attack tool.
-- Make broad architectural changes without clear justification.
-
-When implementing a module, the assistant should identify inputs, outputs, privacy impact, security boundaries, recommendations, and test strategy.
-
-## 18. LoginGuard DNA
-
-Quality over quantity.
-
-Clarity over cleverness.
-
-Architecture over shortcuts.
-
-Documentation over assumptions.
-
-Community over ego.
-
-Education over exploitation.
-
-Long-term sustainability over rapid feature growth.
-
-## 19. Success Metrics
-
-LoginGuard success should be measured by whether it helps people understand and improve authentication security safely.
-
-| Metric | What It Means |
-| --- | --- |
-| Useful security findings | Findings identify meaningful defensive improvements for developers and reviewers. |
-| Clear explanations | Users can understand what was observed, why it matters, and what to do next. |
-| Low false positives | Modules should avoid noisy claims and distinguish uncertainty from evidence. |
-| Stable architecture | The codebase remains modular, testable, and easy to extend. |
-| Good documentation | Project docs explain purpose, architecture, modules, permissions, and safety boundaries. |
-| Beginner-friendly contribution path | New contributors can understand where to start and how to make safe changes. |
-| Safe and ethical usage | The project reinforces authorization, privacy, and defensive use. |
-| Community trust | Users and contributors can rely on LoginGuard's safety posture and transparency. |
-| Repeatable developer workflow | Findings can be checked consistently during development and review. |
-
-Success is not measured by offensive capability, exploit coverage, attack automation, or the ability to interact with targets aggressively. LoginGuard succeeds when it makes defensive security easier to understand without increasing misuse risk.
-
-## 20. Decision-Making Rules
-
-Future project decisions should be evaluated with these questions:
-
-| Question | Decision Guidance |
-| --- | --- |
-| Does this improve defensive security? | Prefer changes that help users harden, understand, or document systems. |
-| Does this preserve passive analysis? | Reject or redesign features that require intrusive target interaction. |
-| Does this keep user privacy intact? | Avoid collecting sensitive data or expanding data access unnecessarily. |
-| Does this make the project easier to maintain? | Favor clear modules, stable contracts, and readable implementation. |
-| Does this help users learn? | Prefer explainable findings and educational recommendations. |
-| Does this fit LoginGuard Lite or LoginGuard Core? | Place features in the correct product track and avoid bloating the extension. |
-| Does this require new permissions? | Require explicit justification and documentation for every permission change. |
-| Does this create misuse risk? | Avoid features that make unauthorized activity easier. |
-
-If a feature creates high misuse risk, it should not be added to the default product. High-risk ideas require redesign, strict isolation, or rejection.
-
-## 21. Permission Policy
-
-Chrome extension permissions must be treated as part of LoginGuard's security model.
-
-Permission principles:
-
-- Request the minimum permissions required.
-- Prefer `activeTab` over broad host permissions when possible.
-- Document every new permission.
-- Explain why each permission is needed.
-- Avoid permissions that enable unnecessary data access.
-- Never add hidden network or telemetry behavior.
-- Review permission changes for privacy impact and user trust.
-
-Any pull request that changes permissions must explain:
-
-1. What capability requires the permission.
-2. What data the permission exposes.
-3. Whether a narrower permission is possible.
-4. How the behavior remains passive and defensive.
-5. How the change is documented for users.
-
-## 22. Release Strategy
-
-LoginGuard releases should mature gradually.
-
-| Stage | Meaning |
-| --- | --- |
-| v0.x experimental development | Architecture and module APIs may change while the project learns. |
-| v0.5 usable beta | Core extension workflows should be usable for defensive review with known limitations. |
-| v1.0 stable Chrome Extension | Stable extension behavior, documented permissions, clear module contracts, and reliable release process. |
-| v2.x modular platform expansion | Expansion toward plugin SDK, CLI, dashboard, reporting, and broader platform capabilities. |
-
-### Release Checklist
-
-Before release:
-
-- [ ] Feature tested in Chrome.
-- [ ] README updated.
-- [ ] CHANGELOG updated.
-- [ ] Security/privacy impact reviewed.
-- [ ] Screenshots updated if UI changed.
-- [ ] No offensive behavior introduced.
-- [ ] Permission changes documented.
-- [ ] Module contracts reviewed if module behavior changed.
-
-## 23. Maintainer Checklist
-
-Maintainers should use this checklist before accepting changes:
-
-- [ ] Does it follow `PROJECT.md`?
-- [ ] Is it passive and defensive?
-- [ ] Is the module isolated?
-- [ ] Are inputs and outputs structured?
-- [ ] Are recommendations explainable?
-- [ ] Are docs updated?
-- [ ] Is the UI still simple?
-- [ ] Are permissions justified?
-- [ ] Is the commit message clear?
-- [ ] Does the change avoid credential collection, form submission, and offensive behavior?
-
-## 24. AI Prompting Workflow
-
-AI assistants can be useful contributors, but they should not define the project direction.
-
-Recommended workflow:
-
-- Always ask AI to read `PROJECT.md` first.
-- Give one focused task at a time.
-- Ask for review before implementation for large changes.
-- Do not ask AI to implement offensive features.
-- Ask AI to explain architectural decisions.
-- Ask AI to update docs when behavior changes.
-- Treat AI as a junior developer, not the project owner.
-
-Good AI prompts should include:
-
-- The exact file or module to change.
-- The intended defensive purpose.
-- The data that may be read.
-- The data that must not be read.
-- The expected output shape.
-- Documentation requirements.
-- Safety boundaries.
-
-## 25. Out-of-Scope Features
-
-The following features do not belong in LoginGuard Core or LoginGuard Lite:
-
-- Brute force.
-- Credential stuffing.
-- Payload spraying.
-- Exploit automation.
-- Phishing workflows.
-- Credential collection.
-- Unauthorized scanning.
-- Hidden telemetry.
-- Background crawling.
-- Automatic form submission.
-- Stealth behavior.
-- Evasion behavior.
-- Third-party target probing without authorization.
-
-If a proposed feature resembles any of these categories, it should be rejected or redesigned into a passive educational feature.
-
-## 26. Future Lab Mode Boundary
-
-Optional Lab Mode may be considered only for local, private, CTF, or intentionally vulnerable training environments.
-
-Lab Mode requirements:
-
-- Must be disabled by default.
-- Must require explicit user enablement.
-- Must never affect LoginGuard Lite default behavior.
-- Must never target third-party systems.
-- Must be clearly separated from Core defensive modules.
-- Must include strong warnings.
-- Must not be required for normal users.
-- Must not weaken LoginGuard's default privacy or safety model.
-
-Lab Mode must be treated as a separate educational boundary, not as a path for offensive features to enter the standard product.
-
-LoginGuard should grow slowly, safely, and deliberately. Every feature should make defensive security easier to understand without making misuse easier.
+Keep `PROJECT.md` as the source of truth.
