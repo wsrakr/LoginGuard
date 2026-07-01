@@ -1,7 +1,8 @@
-# LoginGuard Project Constitution
+# LoginGuard
 
 > **Analyze. Explain. Improve. Never Attack.**
 
+## Project Constitution
 LoginGuard is an open-source defensive browser security platform for understanding authentication-page security through passive, local, and explainable analysis.
 
 This document is the main project constitution. It defines what LoginGuard is, what it is not, how it should evolve, and how humans and AI assistants should make future changes.
@@ -364,3 +365,162 @@ Community over ego.
 Education over exploitation.
 
 Long-term sustainability over rapid feature growth.
+
+## 19. Success Metrics
+
+LoginGuard success should be measured by whether it helps people understand and improve authentication security safely.
+
+| Metric | What It Means |
+| --- | --- |
+| Useful security findings | Findings identify meaningful defensive improvements for developers and reviewers. |
+| Clear explanations | Users can understand what was observed, why it matters, and what to do next. |
+| Low false positives | Modules should avoid noisy claims and distinguish uncertainty from evidence. |
+| Stable architecture | The codebase remains modular, testable, and easy to extend. |
+| Good documentation | Project docs explain purpose, architecture, modules, permissions, and safety boundaries. |
+| Beginner-friendly contribution path | New contributors can understand where to start and how to make safe changes. |
+| Safe and ethical usage | The project reinforces authorization, privacy, and defensive use. |
+| Community trust | Users and contributors can rely on LoginGuard's safety posture and transparency. |
+| Repeatable developer workflow | Findings can be checked consistently during development and review. |
+
+Success is not measured by offensive capability, exploit coverage, attack automation, or the ability to interact with targets aggressively. LoginGuard succeeds when it makes defensive security easier to understand without increasing misuse risk.
+
+## 20. Decision-Making Rules
+
+Future project decisions should be evaluated with these questions:
+
+| Question | Decision Guidance |
+| --- | --- |
+| Does this improve defensive security? | Prefer changes that help users harden, understand, or document systems. |
+| Does this preserve passive analysis? | Reject or redesign features that require intrusive target interaction. |
+| Does this keep user privacy intact? | Avoid collecting sensitive data or expanding data access unnecessarily. |
+| Does this make the project easier to maintain? | Favor clear modules, stable contracts, and readable implementation. |
+| Does this help users learn? | Prefer explainable findings and educational recommendations. |
+| Does this fit LoginGuard Lite or LoginGuard Core? | Place features in the correct product track and avoid bloating the extension. |
+| Does this require new permissions? | Require explicit justification and documentation for every permission change. |
+| Does this create misuse risk? | Avoid features that make unauthorized activity easier. |
+
+If a feature creates high misuse risk, it should not be added to the default product. High-risk ideas require redesign, strict isolation, or rejection.
+
+## 21. Permission Policy
+
+Chrome extension permissions must be treated as part of LoginGuard's security model.
+
+Permission principles:
+
+- Request the minimum permissions required.
+- Prefer `activeTab` over broad host permissions when possible.
+- Document every new permission.
+- Explain why each permission is needed.
+- Avoid permissions that enable unnecessary data access.
+- Never add hidden network or telemetry behavior.
+- Review permission changes for privacy impact and user trust.
+
+Any pull request that changes permissions must explain:
+
+1. What capability requires the permission.
+2. What data the permission exposes.
+3. Whether a narrower permission is possible.
+4. How the behavior remains passive and defensive.
+5. How the change is documented for users.
+
+## 22. Release Strategy
+
+LoginGuard releases should mature gradually.
+
+| Stage | Meaning |
+| --- | --- |
+| v0.x experimental development | Architecture and module APIs may change while the project learns. |
+| v0.5 usable beta | Core extension workflows should be usable for defensive review with known limitations. |
+| v1.0 stable Chrome Extension | Stable extension behavior, documented permissions, clear module contracts, and reliable release process. |
+| v2.x modular platform expansion | Expansion toward plugin SDK, CLI, dashboard, reporting, and broader platform capabilities. |
+
+### Release Checklist
+
+Before release:
+
+- [ ] Feature tested in Chrome.
+- [ ] README updated.
+- [ ] CHANGELOG updated.
+- [ ] Security/privacy impact reviewed.
+- [ ] Screenshots updated if UI changed.
+- [ ] No offensive behavior introduced.
+- [ ] Permission changes documented.
+- [ ] Module contracts reviewed if module behavior changed.
+
+## 23. Maintainer Checklist
+
+Maintainers should use this checklist before accepting changes:
+
+- [ ] Does it follow `PROJECT.md`?
+- [ ] Is it passive and defensive?
+- [ ] Is the module isolated?
+- [ ] Are inputs and outputs structured?
+- [ ] Are recommendations explainable?
+- [ ] Are docs updated?
+- [ ] Is the UI still simple?
+- [ ] Are permissions justified?
+- [ ] Is the commit message clear?
+- [ ] Does the change avoid credential collection, form submission, and offensive behavior?
+
+## 24. AI Prompting Workflow
+
+AI assistants can be useful contributors, but they should not define the project direction.
+
+Recommended workflow:
+
+- Always ask AI to read `PROJECT.md` first.
+- Give one focused task at a time.
+- Ask for review before implementation for large changes.
+- Do not ask AI to implement offensive features.
+- Ask AI to explain architectural decisions.
+- Ask AI to update docs when behavior changes.
+- Treat AI as a junior developer, not the project owner.
+
+Good AI prompts should include:
+
+- The exact file or module to change.
+- The intended defensive purpose.
+- The data that may be read.
+- The data that must not be read.
+- The expected output shape.
+- Documentation requirements.
+- Safety boundaries.
+
+## 25. Out-of-Scope Features
+
+The following features do not belong in LoginGuard Core or LoginGuard Lite:
+
+- Brute force.
+- Credential stuffing.
+- Payload spraying.
+- Exploit automation.
+- Phishing workflows.
+- Credential collection.
+- Unauthorized scanning.
+- Hidden telemetry.
+- Background crawling.
+- Automatic form submission.
+- Stealth behavior.
+- Evasion behavior.
+- Third-party target probing without authorization.
+
+If a proposed feature resembles any of these categories, it should be rejected or redesigned into a passive educational feature.
+
+## 26. Future Lab Mode Boundary
+
+Optional Lab Mode may be considered only for local, private, CTF, or intentionally vulnerable training environments.
+
+Lab Mode requirements:
+
+- Must be disabled by default.
+- Must require explicit user enablement.
+- Must never affect LoginGuard Lite default behavior.
+- Must never target third-party systems.
+- Must be clearly separated from Core defensive modules.
+- Must include strong warnings.
+- Must not be required for normal users.
+- Must not weaken LoginGuard's default privacy or safety model.
+
+Lab Mode must be treated as a separate educational boundary, not as a path for offensive features to enter the standard product.
+
+LoginGuard should grow slowly, safely, and deliberately. Every feature should make defensive security easier to understand without making misuse easier.
