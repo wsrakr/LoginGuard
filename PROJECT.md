@@ -1294,7 +1294,76 @@ If the answer is no, do not add the feature.
 
 ---
 
-# 38. Final Direction
+# 38. Lab Mode Direction
+
+LoginGuard Passive Mode remains the default product mode.
+
+Passive Mode is the core safety boundary for LoginGuard Lite and the default behavior for LoginGuard Core. It must remain defensive, local-first, and passive.
+
+Passive Mode must never:
+
+* Submit forms.
+* Collect credentials.
+* Store secrets.
+* Run payloads.
+* Perform brute force.
+* Attempt bypasses.
+* Modify target pages destructively.
+* Send inspected page data to external services by default.
+
+Lab Mode is a possible future active-testing layer for local and explicitly authorized CTF, training, and lab environments. It must be separate from Passive Mode in architecture, UI, documentation, and safety controls.
+
+Lab Mode may submit harmless synthetic test inputs only when all of the following are true:
+
+* The user has explicitly enabled Lab Mode.
+* The target is a local, private, intentionally vulnerable, CTF, or authorized training environment.
+* The target matches an approved local or lab scope.
+* The test is clearly labeled, explainable, and designed for education or defensive validation.
+
+Lab Mode must be restricted to:
+
+| Allowed Lab Target Type | Requirement |
+| --- | --- |
+| `localhost` | Allowed for local fixtures and local training apps. |
+| `127.0.0.1` | Allowed for loopback-only local testing. |
+| `::1` | Allowed for IPv6 loopback-only local testing. |
+| `.localhost` | Allowed for local development hostnames. |
+| Explicit lab allowlist | Future allowlist only, configured intentionally by the user. |
+
+Lab Mode should refuse to run on normal public websites. If a target is not clearly local or explicitly allowlisted as an authorized lab target, Lab Mode must stop before submitting any synthetic input.
+
+Lab Mode should generate a structured report after tests. The report should record:
+
+* Tested URL.
+* Detected form.
+* Tested parameters.
+* Test category.
+* Response status.
+* Redirect behavior.
+* Visible message changes.
+* Cookie or session changes if observable, without storing secret values.
+* Finding summary.
+* Confidence.
+* Safety note.
+
+Lab Mode must not store real credentials.
+
+Lab Mode must not include:
+
+* Brute force.
+* Password spraying.
+* CAPTCHA bypass.
+* MFA bypass.
+* Stealth logic.
+* Evasion logic.
+* Credential harvesting.
+* Third-party targeting outside explicit authorization.
+
+Lab Mode is for CTF labs, local fixtures, intentionally vulnerable applications, and explicitly authorized training targets. It is not a general attack tool and must never weaken the default Passive Mode safety model.
+
+---
+
+# 39. Final Direction
 
 LoginGuard should become a serious, clean, safe, educational, and modular authentication security assessment ecosystem.
 
