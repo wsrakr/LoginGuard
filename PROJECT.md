@@ -325,6 +325,120 @@ It may include:
 * Documentation for students.
 * Documentation for developers.
 
+## 10.7 Product Vision: Public, Business, Lab, and AI Layers
+
+LoginGuard should help users and organizations understand, monitor, explain, and improve authentication security without becoming a general-purpose attack platform.
+
+The long-term product vision can grow through several distinct layers. These layers may share a core engine and reporting model, but they must preserve clear safety boundaries.
+
+| Layer | Purpose | Safety Boundary |
+| --- | --- | --- |
+| Public Extension Layer | Quick single-page authentication surface analysis for individuals, students, and developers. | Passive, local analysis by default. |
+| Business Monitoring Layer | Future company/team product for authorized authentication surface monitoring. | Authorized domains only, documented scope, no hidden scanning. |
+| Reporting Layer | Human-readable and machine-readable summaries of findings. | Reports must avoid credentials, secrets, and sensitive page contents. |
+| AI Analyst Layer | Future assistant that explains reports and helps prioritize defensive work. | Explains and recommends; does not perform unauthorized testing. |
+| Fix Assistant Direction | Future remediation helper for defensive hardening. | Suggests changes for review; does not apply risky changes automatically. |
+| Lab Mode Layer | Local and authorized training support for labs and CTF-style environments. | Separated from Passive Mode and restricted to local or explicitly authorized lab contexts. |
+
+### Public Extension Layer
+
+The Public Extension Layer is the first product layer.
+
+It should provide:
+
+* Quick single-page authentication surface analysis.
+* Passive local analysis from the current active tab.
+* A basic user and developer report.
+* Clear findings, severity, confidence, evidence, and remediation.
+* Beginner-friendly explanations.
+
+This layer should be useful for individuals, students, developers, educators, and maintainers who want a lightweight authentication review workflow.
+
+### Business Monitoring Layer
+
+The Business Monitoring Layer is a possible future company and team product.
+
+It may support:
+
+* Authorized domain monitoring.
+* One-time scans for approved company assets.
+* Scheduled scans for approved company assets.
+* Continuous monitoring options.
+* Authentication surface inventory.
+* Historical report tracking.
+* Change detection.
+* Team-friendly reporting and ownership workflows.
+
+This layer must require clear authorization and scope control. It must not become hidden crawling, public-site attack automation, or a tool for monitoring domains the user does not own or administer.
+
+### Reporting Layer
+
+The Reporting Layer should make findings useful for different audiences.
+
+Future report types may include:
+
+* Basic public report.
+* Developer report.
+* Executive summary.
+* JSON report.
+* HTML report.
+* Markdown report.
+* PDF report.
+
+Reports should include:
+
+* Findings.
+* Severity.
+* Confidence.
+* Evidence.
+* Remediation.
+* Scope and safety notes.
+
+Reports should not include credentials, tokens, secrets, sensitive form values, or unnecessary page content.
+
+### AI Analyst Layer
+
+The AI Analyst Layer is a possible future assistant for explaining LoginGuard reports.
+
+It may help users:
+
+* Understand findings.
+* Prioritize defensive work.
+* Summarize risk.
+* Suggest safe remediation steps.
+* Create developer task lists.
+* Create executive summaries.
+* Compare report history for authorized assets.
+
+The AI Analyst Layer must not perform unauthorized testing, generate offensive instructions, or make claims that a system is secure without appropriate evidence.
+
+### Fix Assistant Direction
+
+The Fix Assistant is a possible future safe remediation helper.
+
+It may:
+
+* Suggest configuration changes.
+* Suggest code changes for developer review.
+* Explain tradeoffs before changes are applied.
+* Link findings to defensive hardening steps.
+* Help convert findings into maintainable tasks.
+
+It must never apply risky changes automatically without user review. Its purpose is defensive hardening, not bypass development or exploit construction.
+
+### Lab Mode Layer
+
+The Lab Mode Layer is separate from public and business passive scanning.
+
+It is for:
+
+* Local fixtures.
+* CTF labs.
+* Intentionally vulnerable training applications.
+* Explicitly authorized lab targets.
+
+Lab Mode should remain restricted to local allowlists and future explicit lab allowlists. It may produce controlled reports after lab tests, but it must not store real credentials, run brute force, perform password spraying, bypass MFA or CAPTCHA, or target public websites outside explicit authorization.
+
 ---
 
 # 11. Safety Boundaries
