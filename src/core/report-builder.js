@@ -125,9 +125,8 @@
 
   function buildAiAnalystPrompt(analysis) {
     const jsonReport = buildJsonReport(analysis);
-    const markdownReport = buildMarkdownReport(analysis);
     const lines = [
-      "You are a defensive application security analyst reviewing a LoginGuard report.",
+      "You are a defensive web security analyst reviewing a LoginGuard report.",
       "",
       "Safety rules:",
       "- Do not provide exploit steps.",
@@ -152,12 +151,6 @@
       "",
       "```json",
       JSON.stringify(jsonReport, null, 2),
-      "```",
-      "",
-      "## LoginGuard Markdown Report",
-      "",
-      "```markdown",
-      markdownReport,
       "```",
     ];
 
