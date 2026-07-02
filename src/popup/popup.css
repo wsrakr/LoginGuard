@@ -255,6 +255,26 @@ h2 {
   gap: 8px;
 }
 
+.lab-report-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.lab-report-status {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.lab-report-status[data-state="success"] {
+  color: var(--ok);
+}
+
+.lab-report-status[data-state="error"] {
+  color: var(--danger);
+}
+
 .lab-detail-row {
   display: flex;
   justify-content: space-between;

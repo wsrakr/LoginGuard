@@ -41,8 +41,11 @@ let reportSection = null;
 let reportStatus = null;
 let labSection = null;
 let labDetails = null;
+let labReportStatus = null;
 let currentAnalysis = null;
+let currentLabPlan = null;
 let reportBuilderLoadPromise = null;
+let labReportLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   runPageCheck().catch((error) => {
@@ -128,6 +131,7 @@ function sendLabPlanMessage(tabId, url) {
       if (lastError || !response?.ok) {
         resolve({
           allowed: false,
+          url: url || "",
           reason: response?.error || lastError?.message || "Lab Mode plan could not be created.",
           tests: [],
           safetyNote: "Lab Mode preview is unavailable for this page.",
@@ -135,7 +139,11 @@ function sendLabPlanMessage(tabId, url) {
         return;
       }
 
-      resolve(response.labPlan);
+      const labPlan = response.labPlan || {};
+      resolve({
+        ...labPlan,
+        url: labPlan.url || url || "",
+      });
     });
   });
 }
@@ -171,6 +179,7 @@ function renderAnalysis(analysis, labPlan) {
 
 function renderUnsupportedPage(url) {
   currentAnalysis = null;
+  currentLabPlan = null;
 
   setCard(cards.https, elements.httpsStatus, "N/A", "warning");
   setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
@@ -190,6 +199,7 @@ function renderUnsupportedPage(url) {
 
 function renderError(error) {
   currentAnalysis = null;
+  currentLabPlan = null;
 
   setCard(cards.https, elements.httpsStatus, "Error", "danger");
   setCard(cards.login, elements.loginStatus, "Error", "danger");
@@ -505,6 +515,21 @@ function setReportStatus(message, state) {
   delete reportStatus.dataset.state;
 }
 
+function setLabReportStatus(message, state) {
+  if (!labReportStatus) {
+    return;
+  }
+
+  labReportStatus.textContent = message;
+
+  if (state) {
+    labReportStatus.dataset.state = state;
+    return;
+  }
+
+  delete labReportStatus.dataset.state;
+}
+
 function hideReportControls() {
   if (!reportSection) {
     return;
@@ -517,10 +542,12 @@ function hideReportControls() {
 
 function renderLabModePreview(labPlan) {
   if (!labPlan) {
+    currentLabPlan = null;
     hideLabModePreview();
     return;
   }
 
+  currentLabPlan = labPlan;
   ensureLabModeSection();
 
   const statusText = labPlan.allowed ? "Allowed" : "Refused";
@@ -541,10 +568,11 @@ function renderLabModePreview(labPlan) {
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
   labDetails.replaceChildren(...items, categoriesBlock, safetyNote);
+  setLabReportStatus("", "");
 }
 
 function ensureLabModeSection() {
-  if (labSection && labDetails) {
+  if (labSection && labDetails && labReportStatus) {
     return;
   }
 
@@ -552,18 +580,102 @@ function ensureLabModeSection() {
   const section = document.createElement("section");
   const heading = document.createElement("h2");
   const details = document.createElement("div");
+  const actions = document.createElement("div");
+  const jsonButton = document.createElement("button");
+  const markdownButton = document.createElement("button");
+  const status = document.createElement("p");
 
   section.className = "panel lab-panel";
   section.setAttribute("aria-labelledby", "lab-heading");
   heading.id = "lab-heading";
   heading.textContent = "Lab Mode Preview";
   details.className = "lab-details";
+  actions.className = "lab-report-actions";
+  jsonButton.type = "button";
+  jsonButton.className = "report-button";
+  jsonButton.textContent = "Copy Lab JSON Report";
+  markdownButton.type = "button";
+  markdownButton.className = "report-button";
+  markdownButton.textContent = "Copy Lab Markdown Report";
+  status.className = "lab-report-status";
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
 
-  section.append(heading, details);
+  jsonButton.addEventListener("click", copyCurrentLabJsonReport);
+  markdownButton.addEventListener("click", copyCurrentLabMarkdownReport);
+
+  actions.append(jsonButton, markdownButton);
+  section.append(heading, details, actions, status);
   shell.append(section);
 
   labSection = section;
   labDetails = details;
+  labReportStatus = status;
+}
+
+async function copyCurrentLabJsonReport() {
+  if (!currentLabPlan) {
+    setLabReportStatus("No Lab Mode plan is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    const labReport = await getLabReportBuilder();
+    const reportJson = JSON.stringify(labReport.buildLabJsonReport(currentLabPlan), null, 2);
+    JSON.parse(reportJson);
+
+    await navigator.clipboard.writeText(reportJson);
+    setLabReportStatus("Lab JSON report copied locally.", "success");
+  } catch (error) {
+    setLabReportStatus(`Could not copy Lab JSON report: ${error.message}`, "error");
+  }
+}
+
+async function copyCurrentLabMarkdownReport() {
+  if (!currentLabPlan) {
+    setLabReportStatus("No Lab Mode plan is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    const labReport = await getLabReportBuilder();
+
+    await navigator.clipboard.writeText(labReport.buildLabMarkdownReport(currentLabPlan));
+    setLabReportStatus("Lab Markdown report copied locally.", "success");
+  } catch (error) {
+    setLabReportStatus(`Could not copy Lab Markdown report: ${error.message}`, "error");
+  }
+}
+
+async function getLabReportBuilder() {
+  if (globalThis.LoginGuardLabReport) {
+    return globalThis.LoginGuardLabReport;
+  }
+
+  if (!labReportLoadPromise) {
+    labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-report.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabReport) {
+          throw new Error("LoginGuard Lab report builder was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabReport;
+      })
+      .catch((error) => {
+        labReportLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labReportLoadPromise;
 }
 
 function createLabDetailRow(label, value) {
@@ -610,6 +722,8 @@ function hideLabModePreview() {
   labSection.remove();
   labSection = null;
   labDetails = null;
+  labReportStatus = null;
+  currentLabPlan = null;
 }
 
 function getConfidenceState(confidenceScore) {
