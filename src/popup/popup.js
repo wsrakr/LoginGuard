@@ -7,6 +7,7 @@ const INJECTION_FILES = [
   "src/modules/auth/auth-classifier.js",
   "src/modules/login/login-detector.js",
   "src/modules/headers/header-scanner.js",
+  "src/core/normalizers.js",
   "src/core/risk-engine.js",
   "src/core/scanner.js",
   "src/content/content.js",
