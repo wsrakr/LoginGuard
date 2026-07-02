@@ -112,6 +112,8 @@ For planned milestones and future direction, read [ROADMAP.md](ROADMAP.md).
 
 For details about the local JSON report format, read [docs/json-report.md](docs/json-report.md).
 
+For a product-demo style local fixture report, read [docs/demo-report.md](docs/demo-report.md).
+
 For the current preview-only Lab Mode boundaries, read [docs/lab-mode.md](docs/lab-mode.md).
 
 Future work is expected to remain defensive and local-first. Planned areas include cookie analysis, improved risk scoring, recommendations, report export, plugin architecture, CLI tooling, and a web dashboard.
