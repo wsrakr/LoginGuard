@@ -1,80 +1,117 @@
-# LoginGuard
+# LoginGuard — Authentication Surface Security Reporting
 
-**LoginGuard** is a defensive, local-first browser security assessment project for understanding authentication pages.
+**LoginGuard** is a browser-based authentication surface analysis and reporting prototype for developers, students, security researchers, and future team/business monitoring workflows.
 
 It currently ships as a **Manifest V3 Chrome Extension**. The extension analyzes the currently opened page after the user opens the popup and explains browser-visible authentication and security signals without attacking the site.
 
-LoginGuard's motto is:
+LoginGuard is defensive, passive by default, and local-first. It does not prove that a page is secure. It helps users understand what the browser can observe and what should be reviewed before an authentication surface is deployed.
 
 > Analyze. Explain. Improve. Never Attack.
 
 `PROJECT.md` is the source of truth for project direction, safety boundaries, architecture decisions, and future development.
 
-## What LoginGuard Is
+## Current Prototype Features
 
-LoginGuard is:
+- Passive current-page analysis.
+- Login and authentication surface detection.
+- Authentication type classification.
+- HTTPS and local development context handling.
+- Security header findings.
+- Normalized findings.
+- Popup findings view.
+- Copy JSON Report.
+- Copy Markdown Report.
+- Local fixtures for manual testing.
+- Lab Mode Preview for local/authorized lab contexts.
 
-- A defensive browser security tool.
-- A beginner-friendly educational project.
-- A Chrome Extension for passive authentication-surface review.
-- A modular foundation for future security assessment modules.
-- An open-source project for authorized, ethical use.
+## Modes
 
-The long-term direction is a defensive authentication-surface security assessment ecosystem. The Chrome Extension is the first product layer.
+### Passive Mode
 
-## Current Status
+Passive Mode is the default public behavior.
 
-LoginGuard is in early development. The current implementation focuses on passive inspection of the active browser tab and a simple popup UI for findings.
+It analyzes the currently opened page locally and displays authentication, transport, header, risk, and finding summaries. Passive Mode does not submit forms, collect credentials, run payloads, brute force, or send hidden network requests.
 
-The project does not guarantee that a page is secure. It highlights visible signals and gives explanations that can help developers and learners review authentication pages more carefully.
+### Lab Mode Preview
 
-## Current Features
+Lab Mode Preview is a local/authorized lab-only preview. It checks whether the page is an approved lab context, such as `localhost`, `127.0.0.1`, `::1`, or a `.localhost` host, and shows a safe planned test preview.
 
-- Displays the current page URL.
-- Checks whether the page is loaded over HTTPS.
-- Detects likely login forms and authentication areas.
-- Detects username, email, password, and submit controls.
-- Detects SPA-style authentication areas without a native `<form>` tag.
-- Classifies authentication pages as Login, Registration, Password Recovery, Password Reset, MFA / 2FA, SSO, or Unknown.
-- Shows classification confidence and reasons.
-- Checks common security headers when browser-observed response headers are available.
-- Displays Present / Missing status for supported security headers.
-- Provides short recommendations for missing security headers.
-- Copies a local JSON report from the current popup analysis result.
-- Runs locally from the browser extension popup.
+The current Lab Mode Preview does not execute tests, submit forms, read input values, or collect credentials.
 
-## What LoginGuard Does Not Do
+## Reporting
+
+LoginGuard can copy local reports from the popup:
+
+- **JSON report:** structured data for developer notes, issue tracking, or future tooling.
+- **Markdown report:** readable report for sharing with developers, students, or internal teams.
+- **Demo report:** see [docs/demo-report.md](docs/demo-report.md) for a product-demo style report generated from a local fixture.
+
+Reports are generated locally from the current analysis result and copied to the clipboard. LoginGuard does not send report data anywhere and does not store reports automatically.
+
+Reports do not include credentials, cookies, tokens, page HTML, storage contents, or form values.
+
+## Product Vision
+
+LoginGuard starts as a public Chrome Extension, but the long-term direction is a defensive authentication-surface reporting ecosystem.
+
+| Layer | Direction |
+| --- | --- |
+| Public Extension | Quick single-page authentication surface analysis and local reporting. |
+| Business Monitoring | Future authorized domain inventory, one-time scans, scheduled scans, change detection, history, and team-friendly reports. |
+| AI Analyst | Future report explanation, risk prioritization, developer task generation, executive summaries, and safe remediation guidance. |
+| Fix Assistant | Future reviewed suggestions for defensive configuration and code hardening. |
+| Lab Mode | Local/CTF/lab learning layer separated from public/business passive scanning. |
+
+LoginGuard should help users and organizations understand, monitor, explain, and improve authentication security without becoming a general-purpose attack platform.
+
+## Safety Boundaries
 
 LoginGuard does not:
 
-- Attack websites.
-- Submit forms.
 - Collect credentials.
-- Store secrets.
-- Send payloads.
+- Submit forms in Passive Mode.
 - Perform brute force.
-- Perform credential stuffing.
-- Exfiltrate user data.
-- Crawl websites in the background.
-- Claim that a page is definitely secure or insecure.
+- Perform password spraying.
+- Automate attacks against public websites.
+- Run exploit payloads.
+- Bypass MFA or CAPTCHA.
+- Send hidden network requests.
+- Claim that a page is definitely secure.
 
-## Safety and Authorized Use
+Lab Mode is restricted to local or explicitly authorized lab contexts and remains separated from public/business passive scanning.
 
-Use LoginGuard only on pages you own, administer, study in a lab, or have explicit permission to assess.
+## Quick Start
 
-LoginGuard is designed for defensive analysis, secure development, education, and authorized research. It should not be used to test third-party systems without permission.
-
-## Install for Chrome Extension Development
-
-1. Clone or download this repository.
+1. Clone this repository.
 2. Open Chrome and go to `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
-5. Select the LoginGuard project folder.
-6. Open an HTTP or HTTPS page you are authorized to inspect.
-7. Click the LoginGuard extension icon.
+5. Choose the LoginGuard project folder.
+6. From the repository root, serve the fixtures locally:
+
+```powershell
+py -m http.server 8080
+```
+
+7. Open the local demo fixture:
+
+```text
+http://localhost:8080/fixtures/login-basic/
+```
+
+8. Click the LoginGuard extension icon.
 
 After reloading the extension, refresh the inspected page before opening the popup if you want browser-observed response headers to be available.
+
+## Project Documentation
+
+- [PROJECT.md](PROJECT.md) — project constitution, architecture direction, safety boundaries, and AI development guidance.
+- [ROADMAP.md](ROADMAP.md) — practical development phases and future product direction.
+- [SECURITY.md](SECURITY.md) — security policy, responsible disclosure, and authorized-use boundaries.
+- [docs/lab-mode.md](docs/lab-mode.md) — Lab Mode Preview scope and restrictions.
+- [docs/json-report.md](docs/json-report.md) — local JSON report format.
+- [docs/manual-test-matrix.md](docs/manual-test-matrix.md) — manual fixture testing notes.
+- [docs/demo-report.md](docs/demo-report.md) — product-demo style local fixture report.
 
 ## Repository Structure
 
@@ -85,49 +122,25 @@ After reloading the extension, refresh the inspected page before opening the pop
 |-- PROJECT.md
 |-- ROADMAP.md
 |-- SECURITY.md
-|-- CONTRIBUTING.md
-|-- CHANGELOG.md
 |-- assets/
 |   `-- icons/
 |-- docs/
+|-- fixtures/
 |-- src/
 |   |-- background/
 |   |-- content/
 |   |-- core/
+|   |-- lab/
 |   |-- modules/
-|   |   |-- auth/
-|   |   |-- headers/
-|   |   |-- https/
-|   |   `-- login/
 |   |-- popup/
 |   `-- utils/
 `-- .github/
 ```
 
-## Project Direction
-
-For the full project constitution, safety rules, architecture principles, and AI development guidance, read [PROJECT.md](PROJECT.md).
-
-For planned milestones and future direction, read [ROADMAP.md](ROADMAP.md).
-
-For details about the local JSON report format, read [docs/json-report.md](docs/json-report.md).
-
-For a product-demo style local fixture report, read [docs/demo-report.md](docs/demo-report.md).
-
-For the current preview-only Lab Mode boundaries, read [docs/lab-mode.md](docs/lab-mode.md).
-
-Future work is expected to remain defensive and local-first. Planned areas include cookie analysis, improved risk scoring, recommendations, report export, plugin architecture, CLI tooling, and a web dashboard.
-
 ## Contributing
 
 Contributions are welcome when they support LoginGuard's defensive mission.
 
-Good contributions include documentation, safer detection logic, clearer explanations, UI improvements, tests, local fixtures, and modular architecture improvements.
-
-Before contributing, read:
-
-- [PROJECT.md](PROJECT.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [SECURITY.md](SECURITY.md)
+Good contributions include safer detection logic, clearer explanations, documentation, local fixtures, accessibility improvements, UI polish, tests, and modular architecture improvements.
 
 Do not contribute offensive payloads, credential collection, brute-force workflows, phishing support, hidden telemetry, or unauthorized scanning behavior.
