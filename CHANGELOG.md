@@ -2,21 +2,47 @@
 
 All notable changes to LoginGuard will be documented in this file.
 
-This project follows a simple changelog format inspired by Keep a Changelog, with entries grouped by release date.
+This project uses a simple changelog format for early prototype milestones. LoginGuard is defensive, authorized-use only, and passive by default.
 
-## [Unreleased]
+## v0.0.1 - Prototype Foundation
+
+Date: 2026-07-02
+
+This early milestone establishes the LoginGuard prototype foundation. It is not a production-ready release.
 
 ### Added
 
-- Initial Manifest V3 Chrome Extension structure.
-- Popup UI for current-page assessment results.
-- HTTPS checker module.
-- Login detection engine for passive authentication surface analysis.
-- Authentication classifier module for Login, Registration, Password Recovery, Password Reset, MFA / 2FA, SSO, and Unknown page types.
-- Security Headers Scanner module with passive response-header observation, Present / Missing results, and recommendations.
-- Open-source governance files and GitHub contribution templates.
+- Established `PROJECT.md` as the source of truth for project identity, architecture direction, safety boundaries, product vision, and AI development guidance.
+- Aligned `README.md`, `ROADMAP.md`, and `SECURITY.md` with the defensive, authorized-use project direction.
+- Added passive current-page analysis through the Chrome Extension popup workflow.
+- Added authentication surface detection for login-like fields and controls.
+- Added authentication type classification for common authentication page types.
+- Added HTTPS detection and local development context handling.
+- Added passive security header findings when browser-observed response headers are available.
+- Added a normalized findings layer for shared finding structure.
+- Added popup rendering for findings, reasons, security headers, and summaries.
+- Added local JSON report copy.
+- Added local Markdown report copy.
+- Added AI Analyst Prompt copy for local, optional defensive analysis.
+- Extracted report generation into a reusable core report builder.
+- Added local safe fixtures for manual testing.
+- Added a manual test matrix for local fixture behavior.
+- Added Lab Mode context detection for local/authorized lab contexts.
+- Added Lab Mode test plan preview without executing tests.
+- Added Lab Mode documentation.
 
-### Security
+### Safety Boundaries
 
-- Project safety boundaries documented for defensive, educational, and authorized use only.
-- Added Manifest V3 `webRequest`, `storage`, and HTTP/HTTPS host permissions for passive main-frame security-header capture.
+- Passive Mode does not submit forms.
+- LoginGuard does not collect credentials.
+- LoginGuard does not perform brute force.
+- LoginGuard does not execute payloads.
+- Lab Mode Preview does not execute tests yet.
+
+### Next
+
+- Improve report documentation and examples.
+- Add a Lab Mode report builder.
+- Explore an HTML report preview.
+- Document the business monitoring model.
+- Continue shaping the future AI analyst layer.

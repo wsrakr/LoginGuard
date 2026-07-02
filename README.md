@@ -109,6 +109,7 @@ After reloading the extension, refresh the inspected page before opening the pop
 - [PROJECT.md](PROJECT.md) — project constitution, architecture direction, safety boundaries, and AI development guidance.
 - [ROADMAP.md](ROADMAP.md) — practical development phases and future product direction.
 - [SECURITY.md](SECURITY.md) — security policy, responsible disclosure, and authorized-use boundaries.
+- [CHANGELOG.md](CHANGELOG.md) — prototype milestone history.
 - [docs/lab-mode.md](docs/lab-mode.md) — Lab Mode Preview scope and restrictions.
 - [docs/json-report.md](docs/json-report.md) — local JSON report format.
 - [docs/ai-analyst-prompt.md](docs/ai-analyst-prompt.md) — local AI Analyst Prompt behavior and safety boundaries.
