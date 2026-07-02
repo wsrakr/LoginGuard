@@ -86,7 +86,9 @@ Security headers may appear missing during fixture tests because the basic local
 - `Referrer-Policy`
 - `Permissions-Policy`
 
-Missing security headers are expected in this local fixture environment unless the local server is configured to add them.
+Missing security headers are expected in this local fixture environment unless the local server is configured to add them. LoginGuard still shows these missing header findings so developers can see what would matter in deployment, but localhost fixture findings are treated as lower severity local development findings.
+
+Real deployed authentication pages should still include appropriate production security headers. Local fixture results should not be used as proof that a production authentication surface is secure.
 
 ## Safety Note
 

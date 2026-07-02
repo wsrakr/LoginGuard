@@ -112,6 +112,10 @@ LoginGuard recognizes local development contexts such as `localhost`, `127.0.0.1
 
 HTTP on localhost is still reported as **Not HTTPS**, but the finding is treated differently from a real deployed HTTP authentication page. Local fixture testing often runs over HTTP, while production authentication pages should use HTTPS before users enter credentials.
 
+When a page is served from a local development context, JSON reports may still include missing security header findings. Those findings remain visible, but missing headers from localhost fixtures may use severity `"low"` because simple local development servers often omit production security headers.
+
+Real deployed authentication pages should still include appropriate production security headers. A low-severity local fixture report does not prove that a production page is secure.
+
 ## Safety Boundary
 
 JSON reports are for authorized, defensive, and educational use. Do not use LoginGuard reports to assess third-party systems without permission, and do not treat a clean or low-risk report as proof that an authentication page is secure.
