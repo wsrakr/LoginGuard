@@ -194,11 +194,107 @@ Deliverables:
 
 These ideas are long-term possibilities, not current commitments.
 
-## Lab Mode Foundation
+## Public Report System
+
+**Status:** Planned
+
+Goal: turn local findings into polished reports for authorized review without overstating certainty.
+
+Tasks:
+
+- Polish the basic public report experience.
+- Keep the copy JSON report workflow local and explicit.
+- Explore future HTML and Markdown report formats.
+- Create a public demo report using safe fixture data.
+- Add safe explanations for non-technical users.
+- Keep report language clear that findings are browser-visible signals, not a guarantee of security.
+
+Deliverables:
+
+- Improved report schema.
+- Example public demo report.
+- Report interpretation guidance.
+- Future HTML or Markdown report prototype.
+
+## Business Monitoring Foundation
 
 **Status:** Future
 
-Goal: define a separate future Lab Mode foundation for local, private, intentionally vulnerable, CTF, and explicitly authorized training environments.
+Goal: define a future authorized team workflow for monitoring authentication surfaces owned or administered by an organization.
+
+Tasks:
+
+- Define an authorized domain inventory model.
+- Define a scan target model for approved assets.
+- Design a one-time scan concept.
+- Design a scheduled scan concept.
+- Design scan history storage with privacy controls.
+- Design report comparison and change detection.
+- Explore a dashboard concept for teams.
+- Explore alerting concepts for meaningful changes.
+
+Deliverables:
+
+- Business monitoring architecture notes.
+- Authorized asset and scope model.
+- Dashboard concept.
+- Alerting concept.
+
+This layer must not become hidden crawling, unauthorized public-site monitoring, or attack automation.
+
+## AI Analyst Layer
+
+**Status:** Future
+
+Goal: explore AI-assisted report explanation and prioritization while keeping LoginGuard defensive and authorized-use only.
+
+Tasks:
+
+- Explain report findings in beginner-friendly language.
+- Prioritize risk based on severity, confidence, and evidence.
+- Generate developer task lists from findings.
+- Generate executive summaries from report data.
+- Add false-positive notes and uncertainty explanations.
+- Suggest safe remediation guidance.
+
+Deliverables:
+
+- AI analyst design principles.
+- Prompting and privacy model.
+- Example safe report explanation.
+- Human-review workflow for generated tasks.
+
+The AI Analyst Layer should explain and organize defensive work. It must not perform unauthorized testing, generate offensive instructions, or claim that a system is secure without evidence.
+
+## Fix Assistant Direction
+
+**Status:** Future
+
+Goal: explore safe remediation assistance that helps developers review and apply defensive hardening changes.
+
+Tasks:
+
+- Suggest fixes for missing or weak security headers.
+- Provide framework-specific guidance where appropriate.
+- Provide configuration snippets for review.
+- Explain tradeoffs and deployment considerations.
+- Require human review before any changes are applied.
+- Avoid automatic unsafe changes.
+
+Deliverables:
+
+- Safe remediation guidance model.
+- Example security header fix suggestions.
+- Framework guidance templates.
+- Human-review checklist.
+
+The Fix Assistant should support defensive hardening only. It must not produce bypass guidance, exploit construction, or risky automatic changes.
+
+## Lab Mode Future Execution
+
+**Status:** Future
+
+Goal: define future controlled Lab Mode execution for local, private, intentionally vulnerable, CTF, and explicitly authorized training environments.
 
 Passive Mode remains the default LoginGuard behavior. Lab Mode must be separated from Passive Mode in implementation, UI, documentation, and safety controls. It should refuse to run on normal public websites and should never weaken the default passive extension workflow.
 
@@ -215,6 +311,8 @@ Milestones:
 9. Manual test matrix for Lab Mode behavior and refusal cases.
 10. Safety refusal behavior for non-local and non-allowlisted targets.
 
+Future Lab Mode execution must remain local-only or explicitly allowlisted, generate structured lab reports, and refuse public targets.
+
 Lab Mode out of scope:
 
 - Brute force.
@@ -223,6 +321,7 @@ Lab Mode out of scope:
 - Public-site attack automation.
 - CAPTCHA bypass.
 - MFA bypass.
+- Bypass logic.
 - Stealth or evasion.
 
 Lab Mode should support safe CTF and local lab learning only. It should not provide offensive third-party testing workflows or real exploit payload lists.
