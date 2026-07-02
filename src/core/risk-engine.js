@@ -64,7 +64,7 @@
       return "high";
     }
 
-    if (findings.some((finding) => finding.severity === "medium" || finding.status === "warning")) {
+    if (findings.some((finding) => finding.severity === "medium")) {
       return "medium";
     }
 

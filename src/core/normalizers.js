@@ -137,29 +137,62 @@
     })];
   }
 
-  function normalizeHeadersResult(result) {
+  function normalizeHeadersResult(result, options = {}) {
     if (!result) {
       return [];
     }
 
+    const isLocalContext = Boolean(options.isLocalContext);
+
     return (result.headers || []).map((header) => {
       const present = header.status === "Present";
+      const missingLocalHeader = !present && isLocalContext;
 
       return createFinding({
         id: `headers.${slugify(header.name)}`,
         source: result.id || "header-scanner",
         category: "headers",
         status: present ? "pass" : "warning",
-        severity: present ? "info" : "medium",
+        severity: getHeaderSeverity(present, missingLocalHeader),
         confidence: result.responseHeadersAvailable || header.source === "meta" ? 100 : 60,
         title: `${header.name}: ${present ? "Present" : "Missing"}`,
-        summary: present
-          ? `${header.name} was observed from ${header.source}.`
-          : `${header.name} was not observed for this page load.`,
+        summary: getHeaderSummary(header, present, missingLocalHeader),
         evidence: present ? [`Source: ${header.source}`] : [],
-        recommendation: header.recommendation || "No recommendation.",
+        recommendation: getHeaderRecommendation(header, present, missingLocalHeader),
       });
     });
+  }
+
+  function getHeaderSeverity(present, missingLocalHeader) {
+    if (present) {
+      return "info";
+    }
+
+    return missingLocalHeader ? "low" : "medium";
+  }
+
+  function getHeaderSummary(header, present, missingLocalHeader) {
+    if (present) {
+      return `${header.name} was observed from ${header.source}.`;
+    }
+
+    if (missingLocalHeader) {
+      return `${header.name} was not observed for this local development page load. Local development servers often omit production security headers.`;
+    }
+
+    return `${header.name} was not observed for this page load.`;
+  }
+
+  function getHeaderRecommendation(header, present, missingLocalHeader) {
+    if (present) {
+      return header.recommendation || "No recommendation.";
+    }
+
+    if (missingLocalHeader) {
+      return `${header.recommendation || "Review this header before deployment."} Local fixtures may omit this header, but deployed authentication pages should include appropriate production security headers.`;
+    }
+
+    return header.recommendation || "No recommendation.";
   }
 
   function normalizeScanResults(results) {
@@ -167,11 +200,13 @@
       return [];
     }
 
+    const isLocalContext = Boolean(results.https?.isLocalContext);
+
     return [
       ...normalizeHttpsResult(results.https),
       ...normalizeAuthResult(results.auth),
       ...normalizeLoginResult(results.login),
-      ...normalizeHeadersResult(results.headers),
+      ...normalizeHeadersResult(results.headers, { isLocalContext }),
     ];
   }
 
