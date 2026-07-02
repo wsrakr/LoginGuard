@@ -368,23 +368,31 @@ function ensureReportSection() {
   const shell = document.querySelector(".popup-shell");
   const section = document.createElement("section");
   const heading = document.createElement("h2");
-  const button = document.createElement("button");
+  const actions = document.createElement("div");
+  const jsonButton = document.createElement("button");
+  const markdownButton = document.createElement("button");
   const status = document.createElement("p");
 
   section.className = "panel report-panel";
   section.setAttribute("aria-labelledby", "report-heading");
   heading.id = "report-heading";
   heading.textContent = "Report";
-  button.type = "button";
-  button.className = "report-button";
-  button.textContent = "Copy JSON Report";
+  actions.className = "report-actions";
+  jsonButton.type = "button";
+  jsonButton.className = "report-button";
+  jsonButton.textContent = "Copy JSON Report";
+  markdownButton.type = "button";
+  markdownButton.className = "report-button";
+  markdownButton.textContent = "Copy Markdown Report";
   status.className = "report-status";
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
 
-  button.addEventListener("click", copyCurrentJsonReport);
+  jsonButton.addEventListener("click", copyCurrentJsonReport);
+  markdownButton.addEventListener("click", copyCurrentMarkdownReport);
 
-  section.append(heading, button, status);
+  actions.append(jsonButton, markdownButton);
+  section.append(heading, actions, status);
   shell.append(section);
 
   reportSection = section;
@@ -409,6 +417,24 @@ async function copyCurrentJsonReport() {
     setReportStatus("JSON report copied locally.", "success");
   } catch (error) {
     setReportStatus(`Could not copy JSON report: ${error.message}`, "error");
+  }
+}
+
+async function copyCurrentMarkdownReport() {
+  if (!currentAnalysis) {
+    setReportStatus("No completed analysis is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    await navigator.clipboard.writeText(buildMarkdownReport(currentAnalysis));
+    setReportStatus("Markdown report copied locally.", "success");
+  } catch (error) {
+    setReportStatus(`Could not copy Markdown report: ${error.message}`, "error");
   }
 }
 
@@ -454,6 +480,96 @@ function buildJsonReport(analysis) {
   };
 }
 
+function buildMarkdownReport(analysis) {
+  const report = buildJsonReport(analysis);
+  const security = report.securitySummary;
+  const auth = report.authentication;
+  const fields = report.fieldCounts;
+  const risk = report.risk || {};
+  const findings = Array.isArray(report.findings) ? report.findings : [];
+  const lines = [
+    "# LoginGuard Report",
+    "",
+    `Generated: ${toMarkdownText(report.generatedAt)}`,
+    `URL: ${toMarkdownText(report.url)}`,
+    `Origin: ${toMarkdownText(report.origin)}`,
+    "",
+    "## Security Summary",
+    "",
+    `- HTTPS: ${security.usesHttps ? "Yes" : "No"}`,
+    `- Protocol: ${toMarkdownText(security.protocol || "unknown")}`,
+    `- Local context: ${security.isLocalContext ? "Yes" : "No"}`,
+  ];
+
+  if (security.localContextReason) {
+    lines.push(`- Local context reason: ${toMarkdownText(security.localContextReason)}`);
+  }
+
+  lines.push(
+    "",
+    "## Authentication",
+    "",
+    `- Type: ${toMarkdownText(auth.type)}`,
+    `- Confidence: ${toMarkdownText(auth.confidence)} (${auth.confidenceScore}%)`,
+    "",
+    "## Field Counts",
+    "",
+    `- Password fields: ${fields.password}`,
+    `- Username fields: ${fields.username}`,
+    `- Email fields: ${fields.email}`,
+    `- Username/email fields: ${fields.usernameOrEmail}`,
+    "",
+    "## Risk",
+    "",
+    `- Level: ${toMarkdownText(risk.level || "unknown")}`,
+  );
+
+  if (Array.isArray(risk.summary) && risk.summary.length > 0) {
+    lines.push("- Summary:");
+    risk.summary.forEach((item) => {
+      lines.push(`  - ${toMarkdownText(item)}`);
+    });
+  }
+
+  lines.push("", "## Findings", "");
+
+  if (findings.length === 0) {
+    lines.push("No normalized findings were available for this scan.");
+  } else {
+    findings.forEach((finding, index) => {
+      lines.push(
+        `### ${index + 1}. ${toMarkdownText(finding.title || "Untitled finding")}`,
+        "",
+        `- Severity: ${toMarkdownText(finding.severity)}`,
+        `- Status: ${toMarkdownText(finding.status)}`,
+        `- Confidence: ${toFiniteNumber(finding.confidence)}%`,
+        `- Summary: ${toMarkdownText(finding.summary || "No summary available.")}`,
+      );
+
+      if (Array.isArray(finding.evidence) && finding.evidence.length > 0) {
+        lines.push("- Evidence:");
+        finding.evidence.forEach((item) => {
+          lines.push(`  - ${toMarkdownText(item)}`);
+        });
+      }
+
+      lines.push(
+        `- Recommendation: ${toMarkdownText(finding.recommendation || "Review this finding manually.")}`,
+        "",
+      );
+    });
+  }
+
+  lines.push(
+    "## Safety Note",
+    "",
+    toMarkdownText(report.safetyNote),
+    "",
+  );
+
+  return lines.join("\n");
+}
+
 function getReportOrigin(analysis) {
   if (analysis.origin) {
     return String(analysis.origin);
@@ -491,6 +607,12 @@ function sanitizeStringArray(items) {
   }
 
   return items.map((item) => String(item));
+}
+
+function toMarkdownText(value) {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function toFiniteNumber(value) {

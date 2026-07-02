@@ -200,6 +200,11 @@ h2 {
   gap: 8px;
 }
 
+.report-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .report-button {
   width: 100%;
   border: 1px solid var(--border);
