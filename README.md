@@ -44,6 +44,7 @@ LoginGuard can copy local reports from the popup:
 
 - **JSON report:** structured data for developer notes, issue tracking, or future tooling.
 - **Markdown report:** readable report for sharing with developers, students, or internal teams.
+- **AI Analyst Prompt:** local prompt text for optional defensive analysis in an AI assistant.
 - **Demo report:** see [docs/demo-report.md](docs/demo-report.md) for a product-demo style report generated from a local fixture.
 
 Reports are generated locally from the current analysis result and copied to the clipboard. LoginGuard does not send report data anywhere and does not store reports automatically.
@@ -110,6 +111,7 @@ After reloading the extension, refresh the inspected page before opening the pop
 - [SECURITY.md](SECURITY.md) — security policy, responsible disclosure, and authorized-use boundaries.
 - [docs/lab-mode.md](docs/lab-mode.md) — Lab Mode Preview scope and restrictions.
 - [docs/json-report.md](docs/json-report.md) — local JSON report format.
+- [docs/ai-analyst-prompt.md](docs/ai-analyst-prompt.md) — local AI Analyst Prompt behavior and safety boundaries.
 - [docs/manual-test-matrix.md](docs/manual-test-matrix.md) — manual fixture testing notes.
 - [docs/demo-report.md](docs/demo-report.md) — product-demo style local fixture report.
 
