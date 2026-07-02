@@ -195,6 +195,43 @@ h2 {
   line-height: 1.35;
 }
 
+.report-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.report-button {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--surface);
+  cursor: pointer;
+  padding: 9px 10px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.report-button:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
+}
+
+.report-status {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.report-status[data-state="success"] {
+  color: var(--ok);
+}
+
+.report-status[data-state="error"] {
+  color: var(--danger);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #111827;

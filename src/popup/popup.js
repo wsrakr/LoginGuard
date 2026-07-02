@@ -33,6 +33,9 @@ const cards = {
 
 let findingsSection = null;
 let findingsList = null;
+let reportSection = null;
+let reportStatus = null;
+let currentAnalysis = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   runPageCheck().catch((error) => {
@@ -107,6 +110,8 @@ function getSecurityHeaders(tabId, url) {
 }
 
 function renderAnalysis(analysis) {
+  currentAnalysis = analysis;
+
   const login = analysis.modules.login;
   const auth = analysis.modules.auth;
   const usernameOrEmailFields = login.usernameFields + login.emailFields;
@@ -129,9 +134,12 @@ function renderAnalysis(analysis) {
 
   renderHeaders(analysis.modules.headers);
   renderFindings(analysis.findings);
+  renderReportControls(analysis);
 }
 
 function renderUnsupportedPage(url) {
+  currentAnalysis = null;
+
   setCard(cards.https, elements.httpsStatus, "N/A", "warning");
   setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
   setCard(cards.authType, elements.authTypeStatus, "N/A", "warning");
@@ -144,9 +152,12 @@ function renderUnsupportedPage(url) {
   ]);
   renderHeaderItems(["Security headers are unavailable for this page."]);
   hideFindings();
+  hideReportControls();
 }
 
 function renderError(error) {
+  currentAnalysis = null;
+
   setCard(cards.https, elements.httpsStatus, "Error", "danger");
   setCard(cards.login, elements.loginStatus, "Error", "danger");
   setCard(cards.authType, elements.authTypeStatus, "Error", "danger");
@@ -159,6 +170,7 @@ function renderError(error) {
   ]);
   renderHeaderItems(["Security headers could not be analyzed."]);
   hideFindings();
+  hideReportControls();
 }
 
 function setCard(card, valueElement, text, state) {
@@ -229,7 +241,11 @@ function ensureFindingsSection() {
   list.className = "findings-list";
 
   section.append(heading, list);
-  shell.append(section);
+  if (reportSection) {
+    shell.insertBefore(section, reportSection);
+  } else {
+    shell.append(section);
+  }
 
   findingsSection = section;
   findingsList = list;
@@ -299,6 +315,180 @@ function hideFindings() {
   findingsSection.remove();
   findingsSection = null;
   findingsList = null;
+}
+
+function renderReportControls(analysis) {
+  if (!analysis) {
+    hideReportControls();
+    return;
+  }
+
+  ensureReportSection();
+  setReportStatus("", "");
+}
+
+function ensureReportSection() {
+  if (reportSection && reportStatus) {
+    return;
+  }
+
+  const shell = document.querySelector(".popup-shell");
+  const section = document.createElement("section");
+  const heading = document.createElement("h2");
+  const button = document.createElement("button");
+  const status = document.createElement("p");
+
+  section.className = "panel report-panel";
+  section.setAttribute("aria-labelledby", "report-heading");
+  heading.id = "report-heading";
+  heading.textContent = "Report";
+  button.type = "button";
+  button.className = "report-button";
+  button.textContent = "Copy JSON Report";
+  status.className = "report-status";
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+
+  button.addEventListener("click", copyCurrentJsonReport);
+
+  section.append(heading, button, status);
+  shell.append(section);
+
+  reportSection = section;
+  reportStatus = status;
+}
+
+async function copyCurrentJsonReport() {
+  if (!currentAnalysis) {
+    setReportStatus("No completed analysis is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    const reportJson = JSON.stringify(buildJsonReport(currentAnalysis), null, 2);
+    JSON.parse(reportJson);
+
+    await navigator.clipboard.writeText(reportJson);
+    setReportStatus("JSON report copied locally.", "success");
+  } catch (error) {
+    setReportStatus(`Could not copy JSON report: ${error.message}`, "error");
+  }
+}
+
+function buildJsonReport(analysis) {
+  const modules = analysis.modules || {};
+  const login = modules.login || {};
+  const auth = modules.auth || {};
+  const security = analysis.security || {};
+  const https = analysis.https || modules.https || {};
+  const risk = analysis.risk || null;
+  const usernameFields = toFiniteNumber(login.usernameFields);
+  const emailFields = toFiniteNumber(login.emailFields);
+  const passwordFields = toFiniteNumber(login.passwordFields);
+
+  return {
+    project: "LoginGuard",
+    generatedAt: new Date().toISOString(),
+    url: String(analysis.url || ""),
+    origin: getReportOrigin(analysis),
+    securitySummary: {
+      usesHttps: Boolean(security.usesHttps),
+      protocol: String(security.protocol || ""),
+      isLocalContext: Boolean(https.isLocalContext),
+      localContextReason: https.localContextReason || null,
+    },
+    authentication: {
+      type: String(auth.type || analysis.authenticationType || "Unknown"),
+      confidence: String(auth.confidence || analysis.confidence || "Unknown"),
+      confidenceScore: toFiniteNumber(auth.score ?? analysis.confidenceScore),
+    },
+    fieldCounts: {
+      password: passwordFields,
+      username: usernameFields,
+      email: emailFields,
+      usernameOrEmail: usernameFields + emailFields,
+    },
+    findings: sanitizeFindings(analysis.findings),
+    risk: risk ? {
+      level: String(risk.level || "unknown"),
+      summary: sanitizeStringArray(risk.summary),
+    } : null,
+    safetyNote: "LoginGuard performs passive local analysis. No forms were submitted and no credentials were collected.",
+  };
+}
+
+function getReportOrigin(analysis) {
+  if (analysis.origin) {
+    return String(analysis.origin);
+  }
+
+  try {
+    return new URL(analysis.url).origin;
+  } catch {
+    return "";
+  }
+}
+
+function sanitizeFindings(findings) {
+  if (!Array.isArray(findings)) {
+    return [];
+  }
+
+  return findings.map((finding) => ({
+    id: String(finding?.id || ""),
+    source: String(finding?.source || ""),
+    category: String(finding?.category || ""),
+    status: String(finding?.status || "unknown"),
+    severity: String(finding?.severity || "info"),
+    confidence: toFiniteNumber(finding?.confidence),
+    title: String(finding?.title || ""),
+    summary: String(finding?.summary || ""),
+    evidence: sanitizeStringArray(finding?.evidence),
+    recommendation: String(finding?.recommendation || ""),
+  }));
+}
+
+function sanitizeStringArray(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => String(item));
+}
+
+function toFiniteNumber(value) {
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function setReportStatus(message, state) {
+  if (!reportStatus) {
+    return;
+  }
+
+  reportStatus.textContent = message;
+
+  if (state) {
+    reportStatus.dataset.state = state;
+    return;
+  }
+
+  delete reportStatus.dataset.state;
+}
+
+function hideReportControls() {
+  if (!reportSection) {
+    return;
+  }
+
+  reportSection.remove();
+  reportSection = null;
+  reportStatus = null;
 }
 
 function getConfidenceState(confidenceScore) {
