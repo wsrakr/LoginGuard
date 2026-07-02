@@ -8,23 +8,75 @@
     }
 
     const usesHttps = Boolean(result.usesHttps);
+    const isLocalHttp = !usesHttps && Boolean(result.isLocalContext);
 
     return [createFinding({
       id: "https.protocol",
       source: result.id || "https-checker",
       category: "transport",
-      status: usesHttps ? "pass" : "fail",
-      severity: usesHttps ? "info" : "high",
+      status: getHttpsStatus(usesHttps, isLocalHttp),
+      severity: getHttpsSeverity(usesHttps, isLocalHttp),
       confidence: DEFAULT_CONFIDENCE,
-      title: usesHttps ? "HTTPS is used" : "HTTPS is not used",
-      summary: usesHttps
-        ? "The current page is loaded over HTTPS."
-        : "The current page is not loaded over HTTPS.",
-      evidence: [`Protocol: ${result.protocol || "unknown"}`],
-      recommendation: usesHttps
-        ? "Continue serving authentication pages over HTTPS."
-        : "Serve authentication pages over HTTPS before users enter credentials.",
+      title: getHttpsTitle(usesHttps, isLocalHttp),
+      summary: getHttpsSummary(result, usesHttps, isLocalHttp),
+      evidence: getHttpsEvidence(result),
+      recommendation: getHttpsRecommendation(usesHttps, isLocalHttp),
     })];
+  }
+
+  function getHttpsStatus(usesHttps, isLocalHttp) {
+    if (usesHttps) {
+      return "pass";
+    }
+
+    return isLocalHttp ? "info" : "fail";
+  }
+
+  function getHttpsSeverity(usesHttps, isLocalHttp) {
+    if (usesHttps) {
+      return "info";
+    }
+
+    return isLocalHttp ? "low" : "high";
+  }
+
+  function getHttpsTitle(usesHttps, isLocalHttp) {
+    if (usesHttps) {
+      return "HTTPS is used";
+    }
+
+    return isLocalHttp ? "Local HTTP development context" : "HTTPS is not used";
+  }
+
+  function getHttpsSummary(result, usesHttps, isLocalHttp) {
+    if (usesHttps) {
+      return "The current page is loaded over HTTPS.";
+    }
+
+    if (isLocalHttp) {
+      return "The current page is using HTTP in a local development context.";
+    }
+
+    return "The current page is not loaded over HTTPS.";
+  }
+
+  function getHttpsEvidence(result) {
+    return [
+      `Protocol: ${result.protocol || "unknown"}`,
+      result.isLocalContext ? `Local context: ${result.localContextReason || "Detected local development host."}` : null,
+    ].filter(Boolean);
+  }
+
+  function getHttpsRecommendation(usesHttps, isLocalHttp) {
+    if (usesHttps) {
+      return "Continue serving authentication pages over HTTPS.";
+    }
+
+    if (isLocalHttp) {
+      return "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing.";
+    }
+
+    return "Serve authentication pages over HTTPS before users enter credentials.";
   }
 
   function normalizeAuthResult(result) {

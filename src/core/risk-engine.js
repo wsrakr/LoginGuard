@@ -15,9 +15,15 @@
   }
 
   function getHttpsSummary(httpsResult) {
-    return httpsResult.usesHttps
-      ? "The page is loaded over HTTPS."
-      : "The page is not using HTTPS. Credentials entered here may be exposed in transit.";
+    if (httpsResult.usesHttps) {
+      return "The page is loaded over HTTPS.";
+    }
+
+    if (httpsResult.isLocalContext) {
+      return "The page is using HTTP in a local development context.";
+    }
+
+    return "The page is not using HTTPS. Credentials entered here may be exposed in transit.";
   }
 
   function getAuthSummary(authResult, loginResult) {
@@ -40,12 +46,13 @@
     }
 
     const authenticationDetected = results.auth.type !== "Unknown" || results.login.authenticationDetected;
+    const nonLocalHttp = !results.https.usesHttps && !results.https.isLocalContext;
 
-    if (!results.https.usesHttps && authenticationDetected) {
+    if (nonLocalHttp && authenticationDetected) {
       return "high";
     }
 
-    if (!results.https.usesHttps || authenticationDetected) {
+    if (nonLocalHttp || authenticationDetected) {
       return "medium";
     }
 
