@@ -487,12 +487,17 @@ function buildMarkdownReport(analysis) {
   const fields = report.fieldCounts;
   const risk = report.risk || {};
   const findings = Array.isArray(report.findings) ? report.findings : [];
+  const groupedFindings = groupFindingsByCategory(findings);
   const lines = [
     "# LoginGuard Report",
     "",
     `Generated: ${toMarkdownText(report.generatedAt)}`,
     `URL: ${toMarkdownText(report.url)}`,
     `Origin: ${toMarkdownText(report.origin)}`,
+    "",
+    "## Executive Summary",
+    "",
+    createExecutiveSummary(report),
     "",
     "## Security Summary",
     "",
@@ -536,27 +541,11 @@ function buildMarkdownReport(analysis) {
   if (findings.length === 0) {
     lines.push("No normalized findings were available for this scan.");
   } else {
-    findings.forEach((finding, index) => {
-      lines.push(
-        `### ${index + 1}. ${toMarkdownText(finding.title || "Untitled finding")}`,
-        "",
-        `- Severity: ${toMarkdownText(finding.severity)}`,
-        `- Status: ${toMarkdownText(finding.status)}`,
-        `- Confidence: ${toFiniteNumber(finding.confidence)}%`,
-        `- Summary: ${toMarkdownText(finding.summary || "No summary available.")}`,
-      );
-
-      if (Array.isArray(finding.evidence) && finding.evidence.length > 0) {
-        lines.push("- Evidence:");
-        finding.evidence.forEach((item) => {
-          lines.push(`  - ${toMarkdownText(item)}`);
-        });
-      }
-
-      lines.push(
-        `- Recommendation: ${toMarkdownText(finding.recommendation || "Review this finding manually.")}`,
-        "",
-      );
+    groupedFindings.forEach((group) => {
+      lines.push(`### ${group.label}`, "");
+      group.findings.forEach((finding, index) => {
+        appendMarkdownFinding(lines, finding, index);
+      });
     });
   }
 
@@ -568,6 +557,78 @@ function buildMarkdownReport(analysis) {
   );
 
   return lines.join("\n");
+}
+
+function createExecutiveSummary(report) {
+  const authType = toMarkdownText(report.authentication.type || "Unknown");
+  const riskLevel = toMarkdownText(report.risk?.level || "unknown");
+  const localContextText = report.securitySummary.isLocalContext
+    ? "The page appears to be running in a local development context."
+    : "The page does not appear to be running in a local development context.";
+  const interpretation = report.securitySummary.isLocalContext
+    ? "Use these findings as local development guidance before reviewing a deployed authentication surface."
+    : "Use these findings as defensive review guidance for the currently opened page; they do not prove whether the page is secure.";
+
+  return `LoginGuard classified this page as ${authType} with an overall risk level of ${riskLevel}. ${localContextText} ${interpretation}`;
+}
+
+function groupFindingsByCategory(findings) {
+  const groups = [
+    { key: "transport", label: "Transport", findings: [] },
+    { key: "authentication", label: "Authentication", findings: [] },
+    { key: "headers", label: "Headers", findings: [] },
+    { key: "other", label: "Other", findings: [] },
+  ];
+
+  findings.forEach((finding) => {
+    const group = groups.find((item) => item.key === normalizeFindingCategory(finding.category))
+      || groups[groups.length - 1];
+
+    group.findings.push(finding);
+  });
+
+  return groups.filter((group) => group.findings.length > 0);
+}
+
+function normalizeFindingCategory(category) {
+  const normalizedCategory = String(category || "").toLowerCase();
+
+  if (normalizedCategory === "transport") {
+    return "transport";
+  }
+
+  if (normalizedCategory === "authentication") {
+    return "authentication";
+  }
+
+  if (normalizedCategory === "headers") {
+    return "headers";
+  }
+
+  return "other";
+}
+
+function appendMarkdownFinding(lines, finding, index) {
+  lines.push(
+    `#### ${index + 1}. ${toMarkdownText(finding.title || "Untitled finding")}`,
+    "",
+    `- Severity: ${toMarkdownText(finding.severity)}`,
+    `- Status: ${toMarkdownText(finding.status)}`,
+    `- Confidence: ${toFiniteNumber(finding.confidence)}%`,
+    `- Summary: ${toMarkdownText(finding.summary || "No summary available.")}`,
+  );
+
+  if (Array.isArray(finding.evidence) && finding.evidence.length > 0) {
+    lines.push("- Evidence:");
+    finding.evidence.forEach((item) => {
+      lines.push(`  - ${toMarkdownText(item)}`);
+    });
+  }
+
+  lines.push(
+    `- Recommendation: ${toMarkdownText(finding.recommendation || "Review this finding manually.")}`,
+    "",
+  );
 }
 
 function getReportOrigin(analysis) {
