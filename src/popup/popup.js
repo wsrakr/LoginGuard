@@ -372,6 +372,7 @@ function ensureReportSection() {
   const actions = document.createElement("div");
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
+  const aiPromptButton = document.createElement("button");
   const status = document.createElement("p");
 
   section.className = "panel report-panel";
@@ -385,14 +386,18 @@ function ensureReportSection() {
   markdownButton.type = "button";
   markdownButton.className = "report-button";
   markdownButton.textContent = "Copy Markdown Report";
+  aiPromptButton.type = "button";
+  aiPromptButton.className = "report-button";
+  aiPromptButton.textContent = "Copy AI Analyst Prompt";
   status.className = "report-status";
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
 
   jsonButton.addEventListener("click", copyCurrentJsonReport);
   markdownButton.addEventListener("click", copyCurrentMarkdownReport);
+  aiPromptButton.addEventListener("click", copyCurrentAiAnalystPrompt);
 
-  actions.append(jsonButton, markdownButton);
+  actions.append(jsonButton, markdownButton, aiPromptButton);
   section.append(heading, actions, status);
   shell.append(section);
 
@@ -439,6 +444,26 @@ async function copyCurrentMarkdownReport() {
     setReportStatus("Markdown report copied locally.", "success");
   } catch (error) {
     setReportStatus(`Could not copy Markdown report: ${error.message}`, "error");
+  }
+}
+
+async function copyCurrentAiAnalystPrompt() {
+  if (!currentAnalysis) {
+    setReportStatus("No completed analysis is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    const reportBuilder = await getReportBuilder();
+
+    await navigator.clipboard.writeText(reportBuilder.buildAiAnalystPrompt(currentAnalysis));
+    setReportStatus("AI analyst prompt copied locally.", "success");
+  } catch (error) {
+    setReportStatus(`Could not copy AI analyst prompt: ${error.message}`, "error");
   }
 }
 

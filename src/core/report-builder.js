@@ -123,6 +123,47 @@
     return lines.join("\n");
   }
 
+  function buildAiAnalystPrompt(analysis) {
+    const jsonReport = buildJsonReport(analysis);
+    const markdownReport = buildMarkdownReport(analysis);
+    const lines = [
+      "You are a defensive application security analyst reviewing a LoginGuard report.",
+      "",
+      "Safety rules:",
+      "- Do not provide exploit steps.",
+      "- Do not suggest unauthorized testing.",
+      "- Do not claim the page is fully secure.",
+      "- Do not provide payloads, bypass instructions, brute-force workflows, or credential collection guidance.",
+      "- Focus on defensive remediation and reporting.",
+      "- Treat local development context as different from a deployed production authentication page.",
+      "",
+      "Requested output sections:",
+      "1. Executive summary",
+      "2. Key findings",
+      "3. Risk prioritization",
+      "4. Developer task list",
+      "5. Safe remediation suggestions",
+      "6. False-positive or context notes",
+      "7. What should be checked next manually",
+      "",
+      "Use the LoginGuard report data below. Do not infer access to page HTML, cookies, tokens, storage contents, credentials, or form values.",
+      "",
+      "## LoginGuard JSON Report",
+      "",
+      "```json",
+      JSON.stringify(jsonReport, null, 2),
+      "```",
+      "",
+      "## LoginGuard Markdown Report",
+      "",
+      "```markdown",
+      markdownReport,
+      "```",
+    ];
+
+    return lines.join("\n");
+  }
+
   function createExecutiveSummary(report) {
     const authType = toMarkdownText(report.authentication.type || "Unknown");
     const riskLevel = toMarkdownText(report.risk?.level || "unknown");
@@ -247,6 +288,7 @@
   }
 
   globalThis.LoginGuardReportBuilder = {
+    buildAiAnalystPrompt,
     buildJsonReport,
     buildMarkdownReport,
   };
