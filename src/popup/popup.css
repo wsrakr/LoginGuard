@@ -232,6 +232,71 @@ h2 {
   color: var(--danger);
 }
 
+.lab-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.lab-panel[data-state="allowed"] {
+  border-color: color-mix(in srgb, var(--ok) 36%, var(--border));
+}
+
+.lab-panel[data-state="refused"] {
+  border-color: color-mix(in srgb, var(--warn) 42%, var(--border));
+}
+
+.lab-details {
+  display: grid;
+  gap: 8px;
+}
+
+.lab-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 8px 10px;
+  line-height: 1.35;
+}
+
+.lab-detail-row span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lab-detail-row strong {
+  color: var(--text);
+  font-size: 12px;
+  text-align: right;
+}
+
+.lab-categories {
+  display: grid;
+  gap: 6px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 8px 10px;
+}
+
+.lab-categories-label,
+.lab-safety-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.lab-category-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #111827;
