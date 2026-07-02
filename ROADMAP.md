@@ -194,6 +194,39 @@ Deliverables:
 
 These ideas are long-term possibilities, not current commitments.
 
+## Lab Mode Foundation
+
+**Status:** Future
+
+Goal: define a separate future Lab Mode foundation for local, private, intentionally vulnerable, CTF, and explicitly authorized training environments.
+
+Passive Mode remains the default LoginGuard behavior. Lab Mode must be separated from Passive Mode in implementation, UI, documentation, and safety controls. It should refuse to run on normal public websites and should never weaken the default passive extension workflow.
+
+Milestones:
+
+1. Lab context detector for `localhost`, `127.0.0.1`, `::1`, `.localhost`, and future explicit lab allowlists.
+2. Lab Mode UI gate requiring clear user enablement before any lab-only behavior is available.
+3. Local-only test runner skeleton for safe, intentionally scoped lab workflows.
+4. Safe synthetic test input registry for harmless training values only.
+5. Form interaction wrapper with strict scope checks and no real credential handling.
+6. Response observation layer for status, redirects, visible message changes, and observable session changes without storing secrets.
+7. Lab report builder for structured local reports after lab tests.
+8. Local vulnerable fixture pages for controlled education and regression testing.
+9. Manual test matrix for Lab Mode behavior and refusal cases.
+10. Safety refusal behavior for non-local and non-allowlisted targets.
+
+Lab Mode out of scope:
+
+- Brute force.
+- Password spraying.
+- Credential harvesting.
+- Public-site attack automation.
+- CAPTCHA bypass.
+- MFA bypass.
+- Stealth or evasion.
+
+Lab Mode should support safe CTF and local lab learning only. It should not provide offensive third-party testing workflows or real exploit payload lists.
+
 | Area | Direction |
 | --- | --- |
 | CLI | Local command-line workflows for repeatable authorized analysis. |
