@@ -31,6 +31,9 @@ const cards = {
   fields: elements.fieldStatus.closest(".status-card"),
 };
 
+let findingsSection = null;
+let findingsList = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   runPageCheck().catch((error) => {
     renderError(error);
@@ -125,6 +128,7 @@ function renderAnalysis(analysis) {
   ]);
 
   renderHeaders(analysis.modules.headers);
+  renderFindings(analysis.findings);
 }
 
 function renderUnsupportedPage(url) {
@@ -139,6 +143,7 @@ function renderUnsupportedPage(url) {
     `This page cannot be analyzed from the popup: ${url || "unknown URL"}.`,
   ]);
   renderHeaderItems(["Security headers are unavailable for this page."]);
+  hideFindings();
 }
 
 function renderError(error) {
@@ -153,6 +158,7 @@ function renderError(error) {
     error.message,
   ]);
   renderHeaderItems(["Security headers could not be analyzed."]);
+  hideFindings();
 }
 
 function setCard(card, valueElement, text, state) {
@@ -191,6 +197,108 @@ function renderHeaderItems(items) {
       return listItem;
     }),
   );
+}
+
+function renderFindings(findings) {
+  if (!Array.isArray(findings) || findings.length === 0) {
+    hideFindings();
+    return;
+  }
+
+  ensureFindingsSection();
+
+  findingsList.replaceChildren(
+    ...findings.map(createFindingCard),
+  );
+}
+
+function ensureFindingsSection() {
+  if (findingsSection && findingsList) {
+    return;
+  }
+
+  const shell = document.querySelector(".popup-shell");
+  const section = document.createElement("section");
+  const heading = document.createElement("h2");
+  const list = document.createElement("div");
+
+  section.className = "panel findings-panel";
+  section.setAttribute("aria-labelledby", "findings-heading");
+  heading.id = "findings-heading";
+  heading.textContent = "Findings";
+  list.className = "findings-list";
+
+  section.append(heading, list);
+  shell.append(section);
+
+  findingsSection = section;
+  findingsList = list;
+}
+
+function createFindingCard(finding) {
+  const card = document.createElement("article");
+  const title = document.createElement("h3");
+  const meta = document.createElement("div");
+  const summary = document.createElement("p");
+  const recommendation = document.createElement("p");
+
+  card.className = "finding-card";
+  title.textContent = finding.title || "Untitled finding";
+  meta.className = "finding-meta";
+  summary.className = "finding-summary";
+  summary.textContent = finding.summary || "No summary available.";
+  recommendation.className = "finding-recommendation";
+  recommendation.textContent = `Recommendation: ${finding.recommendation || "Review this finding manually."}`;
+
+  meta.append(
+    createFindingBadge("Severity", finding.severity || "unknown"),
+    createFindingBadge("Status", finding.status || "unknown"),
+    createFindingBadge("Confidence", `${Number.isFinite(Number(finding.confidence)) ? finding.confidence : 0}%`),
+  );
+
+  card.append(title, meta, summary);
+
+  if (Array.isArray(finding.evidence) && finding.evidence.length > 0) {
+    card.append(createEvidenceList(finding.evidence));
+  }
+
+  card.append(recommendation);
+
+  return card;
+}
+
+function createFindingBadge(label, value) {
+  const badge = document.createElement("span");
+
+  badge.className = "finding-badge";
+  badge.textContent = `${label}: ${value}`;
+
+  return badge;
+}
+
+function createEvidenceList(evidence) {
+  const list = document.createElement("ul");
+
+  list.className = "finding-evidence";
+  list.replaceChildren(
+    ...evidence.map((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item;
+      return listItem;
+    }),
+  );
+
+  return list;
+}
+
+function hideFindings() {
+  if (!findingsSection) {
+    return;
+  }
+
+  findingsSection.remove();
+  findingsSection = null;
+  findingsList = null;
 }
 
 function getConfidenceState(confidenceScore) {

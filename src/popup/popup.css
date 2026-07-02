@@ -142,6 +142,59 @@ h2 {
   line-height: 1.4;
 }
 
+.findings-list {
+  display: grid;
+  gap: 10px;
+}
+
+.finding-card {
+  display: grid;
+  gap: 8px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 10px;
+}
+
+.finding-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.finding-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.finding-badge {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 3px 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.finding-summary,
+.finding-recommendation {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.finding-evidence {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #111827;
