@@ -40,6 +40,7 @@ The project does not guarantee that a page is secure. It highlights visible sign
 - Checks common security headers when browser-observed response headers are available.
 - Displays Present / Missing status for supported security headers.
 - Provides short recommendations for missing security headers.
+- Copies a local JSON report from the current popup analysis result.
 - Runs locally from the browser extension popup.
 
 ## What LoginGuard Does Not Do
@@ -108,6 +109,8 @@ After reloading the extension, refresh the inspected page before opening the pop
 For the full project constitution, safety rules, architecture principles, and AI development guidance, read [PROJECT.md](PROJECT.md).
 
 For planned milestones and future direction, read [ROADMAP.md](ROADMAP.md).
+
+For details about the local JSON report format, read [docs/json-report.md](docs/json-report.md).
 
 Future work is expected to remain defensive and local-first. Planned areas include cookie analysis, improved risk scoring, recommendations, report export, plugin architecture, CLI tooling, and a web dashboard.
 
