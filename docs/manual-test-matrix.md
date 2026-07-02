@@ -67,7 +67,15 @@ Do not enter real credentials into fixture pages.
 
 These fixtures are served over `http://localhost:8080`, so LoginGuard correctly reports `HTTPS: Not HTTPS`.
 
+LoginGuard now detects `localhost` as a local development context. HTTP on localhost is still shown as `Not HTTPS`, but the finding text is softer than it would be for a real production HTTP login page.
+
+Observed finding text for `login-basic`:
+
+> The page is using HTTP in a local development context.
+
 This is expected for the local manual test setup. The result does not imply that localhost fixtures are production-ready authentication pages.
+
+Real non-local HTTP authentication pages should still be treated as higher risk because credentials entered over non-local HTTP may be exposed in transit.
 
 Security headers may appear missing during fixture tests because the basic local static server does not set production browser security headers such as:
 
