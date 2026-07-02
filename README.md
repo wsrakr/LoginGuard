@@ -36,7 +36,7 @@ It analyzes the currently opened page locally and displays authentication, trans
 
 Lab Mode Preview is a local/authorized lab-only preview. It checks whether the page is an approved lab context, such as `localhost`, `127.0.0.1`, `::1`, or a `.localhost` host, and shows a safe planned test preview.
 
-The current Lab Mode Preview does not execute tests, submit forms, read input values, or collect credentials.
+The current Lab Mode Preview can copy local Lab JSON and Markdown reports from the safe test plan. It does not execute tests, submit forms, read input values, or collect credentials.
 
 ## Reporting
 

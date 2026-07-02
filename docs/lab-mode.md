@@ -74,6 +74,37 @@ Example planned categories may include:
 
 These names describe future observation categories for local labs. They are not payloads and they are not attack instructions.
 
+## Lab Mode Reports
+
+Lab Mode Preview can copy local reports from the current Lab Mode test plan:
+
+- **Copy Lab JSON Report**
+- **Copy Lab Markdown Report**
+
+These reports are generated locally from the existing Lab Mode plan shown in the popup. LoginGuard does not send Lab reports anywhere and does not store them automatically.
+
+Current Lab Mode does not execute tests yet. The `executedTests` field is intentionally empty by design.
+
+Lab reports may include safe metadata already present in the Lab Mode plan:
+
+- Allowed or refused status.
+- URL.
+- Reason.
+- Detected form metadata.
+- Detected input metadata.
+- Planned test categories.
+- `executedTests`.
+- Safety note.
+
+Lab reports do not include:
+
+- Input values.
+- Credentials.
+- Cookies.
+- Tokens.
+- Storage contents.
+- Page HTML.
+
 ## What Lab Mode Preview Does Not Do
 
 Lab Mode Preview does not:

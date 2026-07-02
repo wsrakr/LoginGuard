@@ -4,6 +4,12 @@ All notable changes to LoginGuard will be documented in this file.
 
 This project uses a simple changelog format for early prototype milestones. LoginGuard is defensive, authorized-use only, and passive by default.
 
+## Unreleased
+
+### Added
+
+- Added Lab Mode JSON and Markdown report copy from the local Lab Mode test plan preview.
+
 ## v0.0.1 - Prototype Foundation
 
 Date: 2026-07-02
