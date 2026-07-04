@@ -110,6 +110,27 @@ There is intentionally no `executed` status yet. `buildInitialExecutionResults` 
 
 Execution result records do not include input values, credentials, cookies, tokens, storage contents, or page HTML.
 
+## Baseline Observation Planning
+
+LoginGuard includes a baseline observation planner for future local Lab Mode reporting. This planner creates a safe plan from the existing Lab Mode plan and execution readiness metadata, but it does not execute the plan.
+
+The baseline planner can return:
+
+- `planned` when Lab Mode is allowed, execution readiness is allowed, the `baseline-submit-observation` category is approved, and at least one detected form is available.
+- `blocked` when Lab Mode or execution readiness does not allow the category.
+- `skipped` when there is no detected form metadata to plan against.
+
+The planner records only safe form metadata:
+
+- Form index.
+- Method.
+- Whether an action attribute is present.
+- Input count.
+- Authentication-like input count.
+- Whether a password field was detected.
+
+It may list descriptive observation names such as `current-url-before-action`, `form-method-and-action-presence`, `auth-like-input-metadata`, and `submit-control-presence-if-available`. These are labels for future reporting only. The planner does not submit forms, create test inputs, read input values, run payloads, or send network requests.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:

@@ -9,6 +9,7 @@
     const plannedTestCategories = getPlannedTestCategories(plan.tests);
     const readiness = sanitizeExecutionReadiness(executionReadiness);
     const initialExecutionResults = buildInitialExecutionResults(readiness);
+    const baselineObservationPlan = buildBaselineObservationPlan(plan, readiness);
 
     return {
       project: "LoginGuard",
@@ -24,6 +25,7 @@
       plannedTestCategories,
       executionReadiness: readiness,
       initialExecutionResults,
+      baselineObservationPlan,
       executedTests: [],
       safetyNote: String(plan.safetyNote || DEFAULT_SAFETY_NOTE),
     };
@@ -93,6 +95,24 @@
         );
       });
     }
+
+    lines.push("", "## Baseline Observation Plan", "");
+    lines.push(`Status: ${toMarkdownText(report.baselineObservationPlan.status)}`);
+    lines.push(`Reason: ${toMarkdownText(report.baselineObservationPlan.reason)}`);
+
+    if (report.baselineObservationPlan.targetForms.length === 0) {
+      lines.push("Target forms: none.");
+    } else {
+      lines.push("Target forms:");
+      report.baselineObservationPlan.targetForms.forEach((form) => {
+        lines.push(
+          `- Form ${form.index}: method=${toMarkdownText(form.method)}, actionPresent=${form.actionPresent}, inputs=${form.inputCount}, authLikeInputs=${form.authLikeInputCount}, hasPasswordField=${form.hasPasswordField}`,
+        );
+      });
+    }
+
+    appendCategoryLines(lines, "Observations planned", report.baselineObservationPlan.observationsPlanned);
+    lines.push(`Safety note: ${toMarkdownText(report.baselineObservationPlan.safetyNote)}`);
 
     lines.push("", "## Executed Tests", "");
     lines.push("None. Lab Mode Preview does not execute tests yet.");
@@ -178,6 +198,51 @@
     }
 
     return resultBuilder.buildInitialExecutionResults(readiness).map(sanitizeExecutionResult);
+  }
+
+  function buildBaselineObservationPlan(labPlan, readiness) {
+    const baselinePlanner = globalThis.LoginGuardLabBaselineObservation;
+
+    if (!baselinePlanner?.buildBaselineObservationPlan) {
+      return {
+        category: "baseline-submit-observation",
+        status: "skipped",
+        reason: "Baseline observation planner was not available when this report was generated.",
+        targetForms: [],
+        observationsPlanned: [],
+        safetyNote: "Baseline observation planning was not available. No tests were executed.",
+      };
+    }
+
+    return sanitizeBaselineObservationPlan(
+      baselinePlanner.buildBaselineObservationPlan(labPlan, readiness),
+    );
+  }
+
+  function sanitizeBaselineObservationPlan(plan) {
+    return {
+      category: String(plan?.category || "baseline-submit-observation"),
+      status: ["planned", "blocked", "skipped"].includes(plan?.status) ? plan.status : "skipped",
+      reason: String(plan?.reason || ""),
+      targetForms: sanitizeBaselineTargetForms(plan?.targetForms),
+      observationsPlanned: sanitizeCategoryList(plan?.observationsPlanned),
+      safetyNote: String(plan?.safetyNote || ""),
+    };
+  }
+
+  function sanitizeBaselineTargetForms(forms) {
+    if (!Array.isArray(forms)) {
+      return [];
+    }
+
+    return forms.map((form) => ({
+      index: toFiniteNumber(form?.index),
+      method: String(form?.method || ""),
+      actionPresent: Boolean(form?.actionPresent),
+      inputCount: toFiniteNumber(form?.inputCount),
+      authLikeInputCount: toFiniteNumber(form?.authLikeInputCount),
+      hasPasswordField: Boolean(form?.hasPasswordField),
+    }));
   }
 
   function sanitizeExecutionResult(result) {
