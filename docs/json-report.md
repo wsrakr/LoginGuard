@@ -28,6 +28,8 @@ The copied report is generated locally from the latest popup analysis result. Lo
 | `authentication` | Authentication classification summary, confidence label, and confidence score. |
 | `fieldCounts` | Counts for detected password, username, and email fields. |
 | `findings` | Normalized finding objects produced by LoginGuard modules. |
+| `plainLanguageSummary` | Human-friendly summary for non-technical readers, including what was found, why it matters, what to fix first, and what LoginGuard did not do. |
+| `explainedFindings` | Plain-language explanations derived from normalized findings while preserving technical IDs in `technicalDetail`. |
 | `risk` | Risk level and summary text when available. |
 | `safetyNote` | Reminder that LoginGuard performs passive local analysis only. |
 
@@ -45,6 +47,21 @@ Each finding uses the normalized finding shape:
 | `summary` | Plain-language explanation of what was observed. |
 | `evidence` | Small list of safe evidence strings. |
 | `recommendation` | Defensive recommendation or review guidance. |
+
+`explainedFindings` are generated from the normalized findings and are intended to make reports easier to share with product owners, students, and non-specialist stakeholders. They do not replace the technical `findings` array.
+
+Each explained finding includes:
+
+| Explained Field | Description |
+| --- | --- |
+| `id` | Same technical finding identifier used by the normalized finding. |
+| `title` | Original technical finding title. |
+| `plainTitle` | Friendly title, such as `Connection security` or `Content Security Policy is missing`. |
+| `plainSummary` | Short explanation of what LoginGuard observed. |
+| `whyItMatters` | Defensive context for why the finding should be reviewed. |
+| `riskLabel` | Human-friendly priority label. |
+| `recommendedAction` | Plain defensive next step. |
+| `technicalDetail` | Compact technical metadata for developers and security reviewers. |
 
 ## Excluded Data
 
@@ -96,6 +113,21 @@ The report should be safe to use for local notes and issue tracking, but users s
       "summary": "The current page is using HTTP in a local development context.",
       "evidence": ["Protocol: http:"],
       "recommendation": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing."
+    }
+  ],
+  "plainLanguageSummary": {
+    "mainResult": "Login authentication surface detected.",
+    "context": "This appears to be a local development or lab page.",
+    "riskLevel": "low",
+    "topRecommendation": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing.",
+    "whatWasNotDone": "LoginGuard did not submit forms, read credentials, run payloads, perform brute force, or prove the page is fully secure."
+  },
+  "explainedFindings": [
+    {
+      "id": "https.protocol",
+      "plainTitle": "Connection security",
+      "riskLabel": "Low priority",
+      "recommendedAction": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing."
     }
   ],
   "risk": {

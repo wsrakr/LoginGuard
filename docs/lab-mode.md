@@ -200,6 +200,29 @@ If the executor runs, Lab reports may include the metadata-only result under `ex
 
 When `executedTests` is empty, the report safety note describes a local test plan only. When `executedTests` contains an approved metadata-only baseline observation result, the report safety note explains that the report includes metadata-only observations and that no forms were submitted, no input values were read, and no credentials were collected.
 
+## Empty Fields Observation Planning
+
+LoginGuard includes an Empty Fields Observation Planner for future local Lab Mode work. This planner prepares the `empty-fields-observation` category, but it does not execute the plan.
+
+The planner can return:
+
+- `planned` when Lab Mode is allowed, execution readiness is allowed, and `empty-fields-observation` appears in readiness allowed categories.
+- `blocked` when the Lab Mode plan is missing or refused, execution readiness is missing or refused, or the category is not allowed.
+
+The planner records only safe form metadata from the existing Lab Mode plan:
+
+- Form index.
+- Method.
+- Whether an action attribute is present.
+- Input count.
+- Authentication-like input count.
+- Whether a password field was detected.
+- Submit-control presence if that metadata is already available.
+
+It may list descriptive observation names such as `current-url-before-empty-fields-observation`, `target-form-count`, `empty-fields-precondition-metadata`, `form-method-and-action-presence`, `submit-control-presence-if-available`, and `expected-no-input-value-reading`.
+
+The Empty Fields Observation Planner does not submit forms, execute tests, read input values, clear fields, modify input values, create synthetic input values, or run payloads.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:
@@ -219,6 +242,7 @@ Lab reports may include safe metadata already present in the Lab Mode plan:
 - Detected form metadata.
 - Detected input metadata.
 - Planned test categories.
+- Plain-language Lab Summary explaining what Lab Mode checked, what was safely observed, what was not done, and whether metadata-only baseline observation executed.
 - `executedTests` containing metadata-only baseline observation results, when run.
 - Safety note.
 
@@ -230,6 +254,8 @@ Lab reports do not include:
 - Tokens.
 - Storage contents.
 - Page HTML.
+
+The plain-language Lab Summary is designed for quick review and report sharing. It does not change Lab Mode behavior. It does not submit forms, execute additional tests, read input values, or prove that a page is secure.
 
 ## Persistent Lab Session Page
 
@@ -243,11 +269,20 @@ The popup provides an **Open Lab Session** button. It opens `src/lab/lab-session
 - Planned test categories.
 - Execution readiness.
 - Baseline observation plan.
+- Empty fields observation plan.
 - Execution confirmation status.
 - Latest metadata-only baseline observation result, if run.
 - Lab JSON and Markdown report copy actions.
 
 The Lab Session page uses the same safe message flow as the popup. It does not store credentials, cookies, tokens, form values, page HTML, or storage contents. The latest metadata-only result may remain in page memory while the Lab Session tab is open.
+
+Lab Session also includes a short plain-language section that answers:
+
+- What happened?
+- What was safe?
+- What should I look at?
+
+This section summarizes the current Lab Mode plan, execution readiness, and metadata-only observation status without adding new active behavior.
 
 If no supported local lab target is available, the page shows: `Open a local lab fixture tab first, then return to this Lab Session page.`
 

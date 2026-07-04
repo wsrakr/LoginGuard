@@ -13,6 +13,9 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added popup preview for execution confirmation status.
 - Added Baseline Observation Executor v0 for safe metadata-only lab observation.
 - Added persistent Lab Session page for Lab Mode results.
+- Added Empty Fields Observation Planner for Lab Mode.
+- Added Human-Friendly Findings Layer.
+- Added plain-language summaries to reports and UI.
 
 ### Changed
 

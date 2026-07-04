@@ -13,7 +13,7 @@
     const emailFields = toFiniteNumber(login.emailFields);
     const passwordFields = toFiniteNumber(login.passwordFields);
 
-    return {
+    const report = {
       project: "LoginGuard",
       generatedAt: new Date().toISOString(),
       url: String(analysis.url || ""),
@@ -42,6 +42,13 @@
       } : null,
       safetyNote: SAFETY_NOTE,
     };
+    const explainer = getFindingExplainer();
+
+    return {
+      ...report,
+      plainLanguageSummary: explainer.buildPlainLanguageSummary(report),
+      explainedFindings: report.findings.map((finding) => explainer.explainFinding(finding, report)),
+    };
   }
 
   function buildMarkdownReport(analysis) {
@@ -58,6 +65,13 @@
       `Generated: ${toMarkdownText(report.generatedAt)}`,
       `URL: ${toMarkdownText(report.url)}`,
       `Origin: ${toMarkdownText(report.origin)}`,
+      "",
+      "## Plain Language Summary",
+      "",
+      `- What did LoginGuard find? ${toMarkdownText(report.plainLanguageSummary.whatWasFound)}`,
+      `- Why does it matter? ${toMarkdownText(report.plainLanguageSummary.whyItMatters)}`,
+      `- What should be fixed first? ${toMarkdownText(report.plainLanguageSummary.whatToFixFirst)}`,
+      `- What did LoginGuard not do? ${toMarkdownText(report.plainLanguageSummary.whatWasNotDone)}`,
       "",
       "## Executive Summary",
       "",
@@ -108,7 +122,7 @@
       groupedFindings.forEach((group) => {
         lines.push(`### ${group.label}`, "");
         group.findings.forEach((finding, index) => {
-          appendMarkdownFinding(lines, finding, index);
+          appendMarkdownFinding(lines, finding, index, report);
         });
       });
     }
@@ -214,10 +228,15 @@
     return "other";
   }
 
-  function appendMarkdownFinding(lines, finding, index) {
+  function appendMarkdownFinding(lines, finding, index, report) {
+    const explainedFinding = getFindingExplainer().explainFinding(finding, report);
+
     lines.push(
-      `#### ${index + 1}. ${toMarkdownText(finding.title || "Untitled finding")}`,
+      `#### ${index + 1}. ${toMarkdownText(explainedFinding.plainTitle || finding.title || "Untitled finding")}`,
       "",
+      `- Plain summary: ${toMarkdownText(explainedFinding.plainSummary)}`,
+      `- Why it matters: ${toMarkdownText(explainedFinding.whyItMatters)}`,
+      `- Risk label: ${toMarkdownText(explainedFinding.riskLabel)}`,
       `- Severity: ${toMarkdownText(finding.severity)}`,
       `- Status: ${toMarkdownText(finding.status)}`,
       `- Confidence: ${toFiniteNumber(finding.confidence)}%`,
@@ -233,8 +252,49 @@
 
     lines.push(
       `- Recommendation: ${toMarkdownText(finding.recommendation || "Review this finding manually.")}`,
+      `- Technical detail: ${toMarkdownText(explainedFinding.technicalDetail)}`,
       "",
     );
+  }
+
+  function getFindingExplainer() {
+    if (globalThis.LoginGuardFindingExplainer) {
+      return globalThis.LoginGuardFindingExplainer;
+    }
+
+    return {
+      buildPlainLanguageSummary: buildFallbackPlainLanguageSummary,
+      explainFinding: explainFallbackFinding,
+    };
+  }
+
+  function buildFallbackPlainLanguageSummary(report) {
+    return {
+      mainResult: `${report.authentication?.type || "Unknown"} authentication review.`,
+      context: report.securitySummary?.isLocalContext
+        ? "This appears to be a local development or lab page."
+        : "This appears to be a deployed or non-local page.",
+      riskLevel: String(report.risk?.level || "unknown"),
+      topRecommendation: "Review the normalized findings and apply the highest-priority recommendations first.",
+      whatWasFound: `LoginGuard produced ${Array.isArray(report.findings) ? report.findings.length : 0} normalized findings from passive analysis.`,
+      whyItMatters: "Authentication surfaces should be reviewed carefully because users may rely on them for account access.",
+      whatToFixFirst: "Start with high or medium severity findings, then review lower severity context.",
+      whatWasNotDone: "LoginGuard did not submit forms, collect credentials, run payloads, or prove the page is fully secure.",
+      safetyNote: report.safetyNote || SAFETY_NOTE,
+    };
+  }
+
+  function explainFallbackFinding(finding) {
+    return {
+      id: String(finding?.id || ""),
+      title: String(finding?.title || "Untitled finding"),
+      plainTitle: String(finding?.title || "Security finding"),
+      plainSummary: String(finding?.summary || "LoginGuard found an item that should be reviewed."),
+      whyItMatters: "This finding adds context for a defensive review of the current page.",
+      riskLabel: String(finding?.severity || "info"),
+      recommendedAction: String(finding?.recommendation || "Review this finding manually."),
+      technicalDetail: `Technical ID: ${String(finding?.id || "unknown")}`,
+    };
   }
 
   function getReportOrigin(analysis) {

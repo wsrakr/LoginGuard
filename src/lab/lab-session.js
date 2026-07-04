@@ -14,6 +14,7 @@ const INJECTION_FILES = [
   "src/lab/lab-execution-guard.js",
   "src/lab/lab-execution-confirmation.js",
   "src/lab/lab-baseline-observation.js",
+  "src/lab/lab-empty-fields-observation.js",
   "src/lab/lab-baseline-executor.js",
   "src/lab/lab-runner.js",
   "src/content/content.js",
@@ -23,11 +24,14 @@ const elements = {
   targetUrl: document.querySelector("#target-url"),
   sessionStatus: document.querySelector("#session-status"),
   actionStatus: document.querySelector("#action-status"),
+  plainLabSummary: document.querySelector("#plain-lab-summary"),
   labSummary: document.querySelector("#lab-summary"),
   readinessSummary: document.querySelector("#readiness-summary"),
   plannedCategories: document.querySelector("#planned-categories"),
   baselinePlan: document.querySelector("#baseline-plan"),
   baselineObservations: document.querySelector("#baseline-observations"),
+  emptyFieldsPlan: document.querySelector("#empty-fields-plan"),
+  emptyFieldsObservations: document.querySelector("#empty-fields-observations"),
   confirmationSummary: document.querySelector("#confirmation-summary"),
   executionResult: document.querySelector("#execution-result"),
   executionObservations: document.querySelector("#execution-observations"),
@@ -42,10 +46,12 @@ let targetUrl = "";
 let labPlan = null;
 let executionReadiness = null;
 let baselineObservationPlan = null;
+let emptyFieldsObservationPlan = null;
 let executionConfirmation = null;
 let baselineExecutionResult = null;
 let labReportLoadPromise = null;
 let baselinePlannerLoadPromise = null;
+let emptyFieldsPlannerLoadPromise = null;
 let confirmationLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -82,6 +88,7 @@ async function refreshSession() {
     labPlan = labModeResult.labPlan;
     executionReadiness = labModeResult.executionReadiness;
     baselineObservationPlan = await buildBaselineObservationPlan(labPlan, executionReadiness);
+    emptyFieldsObservationPlan = await buildEmptyFieldsObservationPlan(labPlan, executionReadiness);
     executionConfirmation = await buildExecutionConfirmation(labPlan, executionReadiness, baselineObservationPlan, false);
 
     renderSession();
@@ -95,6 +102,7 @@ function clearSessionState() {
   labPlan = null;
   executionReadiness = null;
   baselineObservationPlan = null;
+  emptyFieldsObservationPlan = null;
   executionConfirmation = null;
   baselineExecutionResult = null;
   renderSession();
@@ -140,6 +148,14 @@ function renderNoSupportedTab(reason = "") {
 }
 
 function renderSession() {
+  const plainSummary = buildPlainLabSessionSummary();
+
+  renderDetails(elements.plainLabSummary, [
+    ["What happened?", plainSummary.whatHappened],
+    ["What was safe?", plainSummary.whatWasSafe],
+    ["What should I look at?", plainSummary.whatToLookAt],
+  ]);
+
   renderDetails(elements.labSummary, [
     ["Lab Mode status", labPlan?.allowed ? "Allowed" : "Refused"],
     ["Reason", labPlan?.reason || (labPlan?.allowed ? "Approved local lab context." : "No Lab Mode plan available.")],
@@ -163,6 +179,13 @@ function renderSession() {
   ]);
   renderList(elements.baselineObservations, baselineObservationPlan?.observationsPlanned || [], "No observations are currently planned.");
 
+  renderDetails(elements.emptyFieldsPlan, [
+    ["Status", emptyFieldsObservationPlan?.status || "blocked"],
+    ["Reason", emptyFieldsObservationPlan?.reason || "Empty Fields Observation Planner is not available."],
+    ["Target forms", String(Array.isArray(emptyFieldsObservationPlan?.targetForms) ? emptyFieldsObservationPlan.targetForms.length : 0)],
+  ]);
+  renderList(elements.emptyFieldsObservations, emptyFieldsObservationPlan?.observationsPlanned || [], "No observations are currently planned.");
+
   renderDetails(elements.confirmationSummary, [
     ["Confirmed", executionConfirmation?.confirmed ? "Yes" : "No"],
     ["Allowed", executionConfirmation?.allowed ? "Yes" : "No"],
@@ -184,6 +207,27 @@ function renderSession() {
   );
 
   updateRunButton();
+}
+
+function buildPlainLabSessionSummary() {
+  const formCount = Array.isArray(labPlan?.detectedForms) ? labPlan.detectedForms.length : 0;
+  const inputCount = Array.isArray(labPlan?.detectedInputs) ? labPlan.detectedInputs.length : 0;
+  const baselineWasRun = baselineExecutionResult?.status === "executed";
+  const allowedText = labPlan?.allowed
+    ? "Lab Mode created a preview for this approved local lab page."
+    : "Lab Mode is refused or no supported local lab page is selected.";
+  const readinessText = executionReadiness?.allowed
+    ? "Execution readiness allows approved planning categories."
+    : "Execution readiness is refused or unavailable.";
+  const observationText = baselineWasRun
+    ? "A metadata-only baseline observation has been recorded."
+    : "No baseline observation has been run yet.";
+
+  return {
+    whatHappened: `${allowedText} ${readinessText} ${observationText}`,
+    whatWasSafe: "LoginGuard did not submit forms, trigger clicks, read input values, collect credentials, run payloads, or navigate the page.",
+    whatToLookAt: `Review the ${formCount} detected form(s), ${inputCount} detected input metadata item(s), readiness status, and any baseline observation result before copying a report.`,
+  };
 }
 
 function renderDetails(container, rows) {
@@ -348,6 +392,12 @@ async function buildBaselineObservationPlan(currentLabPlan, currentReadiness) {
   return planner.buildBaselineObservationPlan(currentLabPlan, currentReadiness);
 }
 
+async function buildEmptyFieldsObservationPlan(currentLabPlan, currentReadiness) {
+  const planner = await getEmptyFieldsPlanner();
+
+  return planner.buildEmptyFieldsObservationPlan(currentLabPlan, currentReadiness);
+}
+
 async function buildExecutionConfirmation(currentLabPlan, currentReadiness, currentBaselinePlan, userConfirmed) {
   const confirmationGate = await getExecutionConfirmationGate();
 
@@ -382,6 +432,29 @@ async function getBaselinePlanner() {
   return baselinePlannerLoadPromise;
 }
 
+async function getEmptyFieldsPlanner() {
+  if (globalThis.LoginGuardLabEmptyFieldsObservation) {
+    return globalThis.LoginGuardLabEmptyFieldsObservation;
+  }
+
+  if (!emptyFieldsPlannerLoadPromise) {
+    emptyFieldsPlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabEmptyFieldsObservation) {
+          throw new Error("LoginGuard Lab empty fields observation planner was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabEmptyFieldsObservation;
+      })
+      .catch((error) => {
+        emptyFieldsPlannerLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return emptyFieldsPlannerLoadPromise;
+}
+
 async function getExecutionConfirmationGate() {
   if (globalThis.LoginGuardLabExecutionConfirmation) {
     return globalThis.LoginGuardLabExecutionConfirmation;
@@ -413,6 +486,7 @@ async function getLabReportBuilder() {
   if (!labReportLoadPromise) {
     labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {

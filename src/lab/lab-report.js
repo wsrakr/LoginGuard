@@ -11,9 +11,10 @@
     const readiness = sanitizeExecutionReadiness(executionReadiness);
     const initialExecutionResults = buildInitialExecutionResults(readiness);
     const baselineObservationPlan = buildBaselineObservationPlan(plan, readiness);
+    const emptyFieldsObservationPlan = buildEmptyFieldsObservationPlan(plan, readiness);
     const safeExecutedTests = sanitizeExecutedTests(executedTests);
 
-    return {
+    const report = {
       project: "LoginGuard",
       mode: "Lab Mode",
       generatedAt: new Date().toISOString(),
@@ -28,8 +29,14 @@
       executionReadiness: readiness,
       initialExecutionResults,
       baselineObservationPlan,
+      emptyFieldsObservationPlan,
       executedTests: safeExecutedTests,
       safetyNote: buildReportSafetyNote(safeExecutedTests),
+    };
+
+    return {
+      ...report,
+      plainLanguageLabSummary: buildPlainLanguageLabSummary(report),
     };
   }
 
@@ -42,6 +49,13 @@
       `Lab Mode status: ${report.allowed ? "Allowed" : "Refused"}`,
       `URL: ${toMarkdownText(report.url || "Unavailable")}`,
       `Reason: ${toMarkdownText(report.reason)}`,
+      "",
+      "## Plain Language Lab Summary",
+      "",
+      `- What Lab Mode checked: ${toMarkdownText(report.plainLanguageLabSummary.whatLabModeChecked)}`,
+      `- What was safely observed: ${toMarkdownText(report.plainLanguageLabSummary.whatWasSafelyObserved)}`,
+      `- What was not done: ${toMarkdownText(report.plainLanguageLabSummary.whatWasNotDone)}`,
+      `- Baseline observation status: ${toMarkdownText(report.plainLanguageLabSummary.baselineObservationStatus)}`,
       "",
       "## Detected Forms",
       "",
@@ -115,6 +129,24 @@
 
     appendCategoryLines(lines, "Observations planned", report.baselineObservationPlan.observationsPlanned);
     lines.push(`Safety note: ${toMarkdownText(report.baselineObservationPlan.safetyNote)}`);
+
+    lines.push("", "## Empty Fields Observation Plan", "");
+    lines.push(`Status: ${toMarkdownText(report.emptyFieldsObservationPlan.status)}`);
+    lines.push(`Reason: ${toMarkdownText(report.emptyFieldsObservationPlan.reason)}`);
+
+    if (report.emptyFieldsObservationPlan.targetForms.length === 0) {
+      lines.push("Target forms: none.");
+    } else {
+      lines.push("Target forms:");
+      report.emptyFieldsObservationPlan.targetForms.forEach((form) => {
+        lines.push(
+          `- Form ${form.index}: method=${toMarkdownText(form.method)}, actionPresent=${form.actionPresent}, inputs=${form.inputCount}, authLikeInputs=${form.authLikeInputCount}, hasPasswordField=${form.hasPasswordField}, submitControlPresent=${form.submitControlPresent}`,
+        );
+      });
+    }
+
+    appendCategoryLines(lines, "Observations planned", report.emptyFieldsObservationPlan.observationsPlanned);
+    lines.push(`Safety note: ${toMarkdownText(report.emptyFieldsObservationPlan.safetyNote)}`);
 
     lines.push("", "## Executed Tests", "");
 
@@ -252,6 +284,52 @@
     };
   }
 
+  function buildEmptyFieldsObservationPlan(labPlan, readiness) {
+    const emptyFieldsPlanner = globalThis.LoginGuardLabEmptyFieldsObservation;
+
+    if (!emptyFieldsPlanner?.buildEmptyFieldsObservationPlan) {
+      return {
+        category: "empty-fields-observation",
+        status: "blocked",
+        reason: "Empty Fields Observation Planner is not available.",
+        targetForms: [],
+        observationsPlanned: [],
+        safetyNote: "Empty fields observation planning was not available. No tests were executed.",
+      };
+    }
+
+    return sanitizeEmptyFieldsObservationPlan(
+      emptyFieldsPlanner.buildEmptyFieldsObservationPlan(labPlan, readiness),
+    );
+  }
+
+  function sanitizeEmptyFieldsObservationPlan(plan) {
+    return {
+      category: String(plan?.category || "empty-fields-observation"),
+      status: ["planned", "blocked"].includes(plan?.status) ? plan.status : "blocked",
+      reason: String(plan?.reason || ""),
+      targetForms: sanitizeEmptyFieldsTargetForms(plan?.targetForms),
+      observationsPlanned: sanitizeCategoryList(plan?.observationsPlanned),
+      safetyNote: String(plan?.safetyNote || ""),
+    };
+  }
+
+  function sanitizeEmptyFieldsTargetForms(forms) {
+    if (!Array.isArray(forms)) {
+      return [];
+    }
+
+    return forms.map((form) => ({
+      index: toFiniteNumber(form?.index),
+      method: String(form?.method || ""),
+      actionPresent: Boolean(form?.actionPresent),
+      inputCount: toFiniteNumber(form?.inputCount),
+      authLikeInputCount: toFiniteNumber(form?.authLikeInputCount),
+      hasPasswordField: Boolean(form?.hasPasswordField),
+      submitControlPresent: Boolean(form?.submitControlPresent),
+    }));
+  }
+
   function sanitizeBaselineTargetForms(forms) {
     if (!Array.isArray(forms)) {
       return [];
@@ -301,6 +379,36 @@
     return executedTests.length > 0
       ? METADATA_OBSERVATION_SAFETY_NOTE
       : PLAN_ONLY_SAFETY_NOTE;
+  }
+
+  function buildPlainLanguageLabSummary(report) {
+    const executedBaseline = report.executedTests.some((result) => (
+      result.category === "baseline-submit-observation" && result.status === "executed"
+    ));
+    const statusText = report.allowed
+      ? "Lab Mode recognized this as an approved local lab context."
+      : "Lab Mode refused this context and did not prepare it for execution.";
+    const readinessText = report.executionReadiness.allowed
+      ? "Execution readiness passed for approved planning categories."
+      : "Execution readiness did not allow execution.";
+    const observedText = executedBaseline
+      ? `A metadata-only baseline observation was recorded with ${countObservationItems(report.executedTests)} safe observation item(s).`
+      : "No metadata-only baseline observation has been run yet.";
+
+    return {
+      whatLabModeChecked: `${statusText} ${readinessText}`,
+      whatWasSafelyObserved: `${observedText} The report includes ${report.detectedFormCount} detected form(s) and ${report.detectedInputCount} detected input metadata item(s).`,
+      whatWasNotDone: "Lab Mode did not submit forms, run payloads, read input values, collect credentials, or prove the page is secure.",
+      baselineObservationStatus: executedBaseline
+        ? "Metadata-only baseline observation executed."
+        : "Baseline observation has not executed; reports show the plan only.",
+    };
+  }
+
+  function countObservationItems(executedTests) {
+    return executedTests.reduce((count, result) => (
+      count + (Array.isArray(result.observations) ? result.observations.length : 0)
+    ), 0);
   }
 
   function sanitizeObservations(observations) {

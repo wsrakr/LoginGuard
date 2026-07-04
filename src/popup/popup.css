@@ -142,6 +142,38 @@ h2 {
   line-height: 1.4;
 }
 
+.human-summary-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.human-summary-list {
+  display: grid;
+  gap: 8px;
+}
+
+.human-summary-row {
+  display: grid;
+  gap: 4px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 9px 10px;
+  line-height: 1.4;
+}
+
+.human-summary-row span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.human-summary-row strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .findings-list {
   display: grid;
   gap: 10px;

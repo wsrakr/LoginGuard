@@ -16,6 +16,7 @@ const INJECTION_FILES = [
   "src/lab/lab-execution-guard.js",
   "src/lab/lab-execution-confirmation.js",
   "src/lab/lab-baseline-observation.js",
+  "src/lab/lab-empty-fields-observation.js",
   "src/lab/lab-baseline-executor.js",
   "src/lab/lab-runner.js",
   "src/content/content.js",
@@ -42,6 +43,8 @@ const cards = {
 
 let findingsSection = null;
 let findingsList = null;
+let humanSummarySection = null;
+let humanSummaryDetails = null;
 let reportSection = null;
 let reportStatus = null;
 let labSection = null;
@@ -57,6 +60,7 @@ let currentBaselineExecutionResult = null;
 let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
 let labBaselinePlannerLoadPromise = null;
+let labEmptyFieldsPlannerLoadPromise = null;
 let labExecutionConfirmationLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -193,6 +197,7 @@ function renderAnalysis(analysis, labPlan, executionReadiness) {
   ]);
 
   renderHeaders(analysis.modules.headers);
+  renderHumanSummary(analysis);
   renderFindings(analysis.findings);
   renderReportControls(analysis);
   renderLabModePreview(labPlan, executionReadiness);
@@ -216,6 +221,7 @@ function renderUnsupportedPage(url) {
     `This page cannot be analyzed from the popup: ${url || "unknown URL"}.`,
   ]);
   renderHeaderItems(["Security headers are unavailable for this page."]);
+  hideHumanSummary();
   hideFindings();
   hideReportControls();
   hideLabModePreview();
@@ -239,6 +245,7 @@ function renderError(error) {
     error.message,
   ]);
   renderHeaderItems(["Security headers could not be analyzed."]);
+  hideHumanSummary();
   hideFindings();
   hideReportControls();
   hideLabModePreview();
@@ -280,6 +287,100 @@ function renderHeaderItems(items) {
       return listItem;
     }),
   );
+}
+
+function renderHumanSummary(analysis) {
+  ensureHumanSummarySection();
+  fillHumanSummary({
+    mainResult: "Preparing plain-language summary...",
+    riskLevel: "unknown",
+    topRecommendation: "Review the findings once analysis finishes.",
+    safetyNote: "LoginGuard performs passive local analysis only.",
+  });
+
+  getReportBuilder()
+    .then((reportBuilder) => {
+      if (currentAnalysis !== analysis) {
+        return;
+      }
+
+      const report = reportBuilder.buildJsonReport(analysis);
+      fillHumanSummary(report.plainLanguageSummary || {});
+    })
+    .catch((error) => {
+      fillHumanSummary({
+        mainResult: "Plain-language summary is unavailable.",
+        riskLevel: analysis?.risk?.level || "unknown",
+        topRecommendation: "Review the technical findings below.",
+        safetyNote: `Summary could not be built: ${error.message}`,
+      });
+    });
+}
+
+function ensureHumanSummarySection() {
+  if (humanSummarySection && humanSummaryDetails) {
+    return;
+  }
+
+  const shell = document.querySelector(".popup-shell");
+  const section = document.createElement("section");
+  const heading = document.createElement("h2");
+  const details = document.createElement("div");
+
+  section.className = "panel human-summary-panel";
+  section.setAttribute("aria-labelledby", "human-summary-heading");
+  heading.id = "human-summary-heading";
+  heading.textContent = "Plain Language Summary";
+  details.className = "human-summary-list";
+
+  section.append(heading, details);
+
+  if (findingsSection) {
+    shell.insertBefore(section, findingsSection);
+  } else if (reportSection) {
+    shell.insertBefore(section, reportSection);
+  } else {
+    shell.append(section);
+  }
+
+  humanSummarySection = section;
+  humanSummaryDetails = details;
+}
+
+function fillHumanSummary(summary) {
+  if (!humanSummaryDetails) {
+    return;
+  }
+
+  humanSummaryDetails.replaceChildren(
+    createHumanSummaryRow("Main result", summary.mainResult || summary.whatWasFound || "No summary available."),
+    createHumanSummaryRow("Risk level", summary.riskLevel || "unknown"),
+    createHumanSummaryRow("Top recommendation", summary.topRecommendation || summary.whatToFixFirst || "Review the findings below."),
+    createHumanSummaryRow("Safety note", summary.safetyNote || summary.whatWasNotDone || "No forms were submitted and no credentials were collected."),
+  );
+}
+
+function createHumanSummaryRow(label, value) {
+  const row = document.createElement("p");
+  const labelElement = document.createElement("span");
+  const valueElement = document.createElement("strong");
+
+  row.className = "human-summary-row";
+  labelElement.textContent = label;
+  valueElement.textContent = value;
+  row.append(labelElement, valueElement);
+
+  return row;
+}
+
+function hideHumanSummary() {
+  if (!humanSummarySection) {
+    return;
+  }
+
+  humanSummarySection.remove();
+  humanSummarySection = null;
+  humanSummaryDetails = null;
 }
 
 function renderFindings(findings) {
@@ -533,7 +634,8 @@ async function getReportBuilder() {
   }
 
   if (!reportBuilderLoadPromise) {
-    reportBuilderLoadPromise = import(chrome.runtime.getURL("src/core/report-builder.js"))
+    reportBuilderLoadPromise = import(chrome.runtime.getURL("src/core/finding-explainer.js"))
+      .then(() => import(chrome.runtime.getURL("src/core/report-builder.js")))
       .then(() => {
         if (!globalThis.LoginGuardReportBuilder) {
           throw new Error("LoginGuard report builder was not loaded.");
@@ -619,6 +721,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
+  const emptyFieldsBlock = createEmptyFieldsObservationBlock(labPlan, currentExecutionReadiness);
   const confirmationBlock = createExecutionConfirmationBlock(labPlan, currentExecutionReadiness);
   const executionResultBlock = createBaselineExecutionResultBlock();
   const safetyNote = document.createElement("p");
@@ -627,7 +730,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, confirmationBlock, executionResultBlock);
+  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, emptyFieldsBlock, confirmationBlock, executionResultBlock);
   updateBaselineRunButton();
   setLabReportStatus("", "");
 }
@@ -738,6 +841,7 @@ async function getLabReportBuilder() {
   if (!labReportLoadPromise) {
     labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
@@ -827,6 +931,34 @@ function createBaselineObservationBlock(labPlan, readiness) {
   return block;
 }
 
+function createEmptyFieldsObservationBlock(labPlan, readiness) {
+  const block = document.createElement("div");
+
+  block.className = "lab-readiness lab-empty-fields-plan";
+  fillEmptyFieldsObservationBlock(
+    block,
+    createUnavailableEmptyFieldsPlan("Empty Fields Observation Planner is not available."),
+  );
+
+  getLabEmptyFieldsPlanner()
+    .then((planner) => {
+      if (currentLabPlan !== labPlan || currentExecutionReadiness !== readiness) {
+        return;
+      }
+
+      const emptyFieldsPlan = planner.buildEmptyFieldsObservationPlan(labPlan, readiness);
+      fillEmptyFieldsObservationBlock(block, emptyFieldsPlan);
+    })
+    .catch(() => {
+      fillEmptyFieldsObservationBlock(
+        block,
+        createUnavailableEmptyFieldsPlan("Empty Fields Observation Planner is not available."),
+      );
+    });
+
+  return block;
+}
+
 function createExecutionConfirmationBlock(labPlan, readiness) {
   const block = document.createElement("div");
 
@@ -889,6 +1021,29 @@ function fillBaselineObservationBlock(block, baselinePlan) {
     title,
     createLabDetailRow("Status", baselinePlan?.status || "skipped"),
     createLabDetailRow("Reason", baselinePlan?.reason || "Baseline observation plan is unavailable."),
+    createLabDetailRow("Target forms", String(targetForms.length)),
+    createLabCategoryListBlock("Observations planned", observationsPlanned, "No observations are currently planned."),
+    safetyNote,
+  );
+}
+
+function fillEmptyFieldsObservationBlock(block, emptyFieldsPlan) {
+  const title = document.createElement("p");
+  const safetyNote = document.createElement("p");
+  const targetForms = Array.isArray(emptyFieldsPlan?.targetForms) ? emptyFieldsPlan.targetForms : [];
+  const observationsPlanned = Array.isArray(emptyFieldsPlan?.observationsPlanned)
+    ? emptyFieldsPlan.observationsPlanned
+    : [];
+
+  title.className = "lab-readiness-title";
+  title.textContent = "Empty Fields Observation Plan";
+  safetyNote.className = "lab-safety-note";
+  safetyNote.textContent = emptyFieldsPlan?.safetyNote || "Empty fields observation planning is preview-only. No tests were executed.";
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Status", emptyFieldsPlan?.status || "blocked"),
+    createLabDetailRow("Reason", emptyFieldsPlan?.reason || "Empty Fields Observation Planner is not available."),
     createLabDetailRow("Target forms", String(targetForms.length)),
     createLabCategoryListBlock("Observations planned", observationsPlanned, "No observations are currently planned."),
     safetyNote,
@@ -962,6 +1117,16 @@ function createUnavailableBaselinePlan(reason) {
   };
 }
 
+function createUnavailableEmptyFieldsPlan(reason) {
+  return {
+    status: "blocked",
+    reason,
+    targetForms: [],
+    observationsPlanned: [],
+    safetyNote: "Empty fields observation planning was not executed. No forms were submitted and no input values were read, cleared, or modified.",
+  };
+}
+
 function createUnavailableExecutionConfirmation(reason) {
   return {
     confirmed: false,
@@ -993,6 +1158,29 @@ async function getLabBaselinePlanner() {
   }
 
   return labBaselinePlannerLoadPromise;
+}
+
+async function getLabEmptyFieldsPlanner() {
+  if (globalThis.LoginGuardLabEmptyFieldsObservation) {
+    return globalThis.LoginGuardLabEmptyFieldsObservation;
+  }
+
+  if (!labEmptyFieldsPlannerLoadPromise) {
+    labEmptyFieldsPlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabEmptyFieldsObservation) {
+          throw new Error("LoginGuard Lab empty fields observation planner was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabEmptyFieldsObservation;
+      })
+      .catch((error) => {
+        labEmptyFieldsPlannerLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labEmptyFieldsPlannerLoadPromise;
 }
 
 async function getLabExecutionConfirmationGate() {
