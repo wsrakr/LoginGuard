@@ -74,6 +74,27 @@ Example planned categories may include:
 
 These names describe future observation categories for local labs. They are not payloads and they are not attack instructions.
 
+## Execution Guard
+
+LoginGuard includes a Lab Mode execution guard as a future-safety layer. The guard evaluates whether a Lab Mode plan would be eligible for future controlled execution, but it does not execute tests.
+
+The guard refuses execution readiness when:
+
+- No Lab Mode plan is available.
+- The Lab Mode plan is refused.
+- The plan URL is missing.
+- The URL is not an approved local lab context.
+- No planned test categories are available.
+- A category is not currently approved for future execution.
+
+For now, only these future-safe categories may pass readiness:
+
+- `baseline-submit-observation`
+- `empty-fields-observation`
+- `response-message-comparison`
+
+The category `invalid-synthetic-credentials-observation` remains blocked until it receives additional review. This guard does not submit forms, run tests, read input values, or send network requests.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:
