@@ -641,7 +641,7 @@ async function copyCurrentLabJsonReport() {
     }
 
     const labReport = await getLabReportBuilder();
-    const reportJson = JSON.stringify(labReport.buildLabJsonReport(currentLabPlan), null, 2);
+    const reportJson = JSON.stringify(labReport.buildLabJsonReport(currentLabPlan, currentExecutionReadiness), null, 2);
     JSON.parse(reportJson);
 
     await navigator.clipboard.writeText(reportJson);
@@ -664,7 +664,7 @@ async function copyCurrentLabMarkdownReport() {
 
     const labReport = await getLabReportBuilder();
 
-    await navigator.clipboard.writeText(labReport.buildLabMarkdownReport(currentLabPlan));
+    await navigator.clipboard.writeText(labReport.buildLabMarkdownReport(currentLabPlan, currentExecutionReadiness));
     setLabReportStatus("Lab Markdown report copied locally.", "success");
   } catch (error) {
     setLabReportStatus(`Could not copy Lab Markdown report: ${error.message}`, "error");
@@ -677,7 +677,8 @@ async function getLabReportBuilder() {
   }
 
   if (!labReportLoadPromise) {
-    labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-report.js"))
+    labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
           throw new Error("LoginGuard Lab report builder was not loaded.");

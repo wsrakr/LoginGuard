@@ -2,11 +2,13 @@
 (() => {
   const DEFAULT_SAFETY_NOTE = "Lab Mode report generated locally. No Lab Mode tests were executed, no forms were submitted, and no credentials were collected.";
 
-  function buildLabJsonReport(labPlan) {
+  function buildLabJsonReport(labPlan, executionReadiness) {
     const plan = labPlan || {};
     const detectedForms = sanitizeDetectedForms(plan.detectedForms);
     const detectedInputs = sanitizeDetectedInputs(plan.detectedInputs);
     const plannedTestCategories = getPlannedTestCategories(plan.tests);
+    const readiness = sanitizeExecutionReadiness(executionReadiness);
+    const initialExecutionResults = buildInitialExecutionResults(readiness);
 
     return {
       project: "LoginGuard",
@@ -20,13 +22,15 @@
       detectedInputs,
       detectedInputCount: detectedInputs.length,
       plannedTestCategories,
+      executionReadiness: readiness,
+      initialExecutionResults,
       executedTests: [],
       safetyNote: String(plan.safetyNote || DEFAULT_SAFETY_NOTE),
     };
   }
 
-  function buildLabMarkdownReport(labPlan) {
-    const report = buildLabJsonReport(labPlan);
+  function buildLabMarkdownReport(labPlan, executionReadiness) {
+    const report = buildLabJsonReport(labPlan, executionReadiness);
     const lines = [
       "# LoginGuard Lab Mode Report",
       "",
@@ -71,17 +75,29 @@
       });
     }
 
-    lines.push(
-      "",
-      "## Executed Tests",
-      "",
-      "None. Lab Mode Preview does not execute tests yet.",
-      "",
-      "## Safety Note",
-      "",
-      toMarkdownText(report.safetyNote),
-      "",
-    );
+    lines.push("", "## Execution Readiness", "");
+    lines.push(`Status: ${report.executionReadiness.allowed ? "Allowed" : "Refused"}`);
+    lines.push(`Reason: ${toMarkdownText(report.executionReadiness.reason)}`);
+    appendCategoryLines(lines, "Allowed categories", report.executionReadiness.allowedCategories);
+    appendCategoryLines(lines, "Blocked categories", report.executionReadiness.blockedCategories);
+    lines.push(`Safety note: ${toMarkdownText(report.executionReadiness.safetyNote)}`);
+
+    lines.push("", "## Initial Execution Results", "");
+
+    if (report.initialExecutionResults.length === 0) {
+      lines.push("No initial execution result records were created because execution readiness was not available.");
+    } else {
+      report.initialExecutionResults.forEach((result) => {
+        lines.push(
+          `- ${toMarkdownText(result.category)}: status=${toMarkdownText(result.status)}, reason=${toMarkdownText(result.reason)}, safetyNote=${toMarkdownText(result.safetyNote)}`,
+        );
+      });
+    }
+
+    lines.push("", "## Executed Tests", "");
+    lines.push("None. Lab Mode Preview does not execute tests yet.");
+    lines.push("", "## Safety Note", "");
+    lines.push(toMarkdownText(report.safetyNote), "");
 
     return lines.join("\n");
   }
@@ -132,6 +148,72 @@
     return plan.allowed
       ? "Lab Mode plan was created for an approved local lab context."
       : "Lab Mode was refused for this context.";
+  }
+
+  function sanitizeExecutionReadiness(readiness) {
+    if (!readiness) {
+      return {
+        allowed: false,
+        reason: "Execution readiness was not available when this report was generated.",
+        allowedCategories: [],
+        blockedCategories: [],
+        safetyNote: "Execution readiness was not available. No tests were executed.",
+      };
+    }
+
+    return {
+      allowed: Boolean(readiness.allowed),
+      reason: String(readiness.reason || "Execution readiness did not include a reason."),
+      allowedCategories: sanitizeCategoryList(readiness.allowedCategories),
+      blockedCategories: sanitizeCategoryList(readiness.blockedCategories),
+      safetyNote: String(readiness.safetyNote || "Execution readiness is report-only. No tests were executed."),
+    };
+  }
+
+  function buildInitialExecutionResults(readiness) {
+    const resultBuilder = globalThis.LoginGuardLabExecutionResult;
+
+    if (!resultBuilder?.buildInitialExecutionResults) {
+      return [];
+    }
+
+    return resultBuilder.buildInitialExecutionResults(readiness).map(sanitizeExecutionResult);
+  }
+
+  function sanitizeExecutionResult(result) {
+    return {
+      id: String(result?.id || ""),
+      category: String(result?.category || ""),
+      status: String(result?.status || ""),
+      startedAt: null,
+      finishedAt: null,
+      observations: [],
+      reason: String(result?.reason || ""),
+      safetyNote: String(result?.safetyNote || ""),
+    };
+  }
+
+  function sanitizeCategoryList(categories) {
+    if (!Array.isArray(categories)) {
+      return [];
+    }
+
+    return categories
+      .map((category) => String(category || ""))
+      .filter(Boolean);
+  }
+
+  function appendCategoryLines(lines, label, categories) {
+    lines.push(`${label}:`);
+
+    if (categories.length === 0) {
+      lines.push("- None.");
+      return;
+    }
+
+    categories.forEach((category) => {
+      lines.push(`- ${toMarkdownText(category)}`);
+    });
   }
 
   function toMarkdownText(value) {
