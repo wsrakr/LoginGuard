@@ -48,6 +48,7 @@ let currentLabPlan = null;
 let currentExecutionReadiness = null;
 let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
+let labBaselinePlannerLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   runPageCheck().catch((error) => {
@@ -577,13 +578,14 @@ function renderLabModePreview(labPlan, executionReadiness) {
   ];
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
+  const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
   const safetyNote = document.createElement("p");
 
   safetyNote.className = "lab-safety-note";
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock);
+  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock);
   setLabReportStatus("", "");
 }
 
@@ -736,6 +738,90 @@ function createExecutionReadinessBlock(readiness) {
   );
 
   return block;
+}
+
+function createBaselineObservationBlock(labPlan, readiness) {
+  const block = document.createElement("div");
+
+  block.className = "lab-readiness lab-baseline-plan";
+  fillBaselineObservationBlock(
+    block,
+    createUnavailableBaselinePlan("Baseline observation planner is loading. No plan was executed."),
+  );
+
+  getLabBaselinePlanner()
+    .then((planner) => {
+      if (currentLabPlan !== labPlan || currentExecutionReadiness !== readiness) {
+        return;
+      }
+
+      const baselinePlan = planner.buildBaselineObservationPlan(labPlan, readiness);
+      fillBaselineObservationBlock(block, baselinePlan);
+    })
+    .catch((error) => {
+      fillBaselineObservationBlock(
+        block,
+        createUnavailableBaselinePlan(`Baseline observation planner is unavailable: ${error.message}`),
+      );
+    });
+
+  return block;
+}
+
+function fillBaselineObservationBlock(block, baselinePlan) {
+  const title = document.createElement("p");
+  const safetyNote = document.createElement("p");
+  const targetForms = Array.isArray(baselinePlan?.targetForms) ? baselinePlan.targetForms : [];
+  const observationsPlanned = Array.isArray(baselinePlan?.observationsPlanned)
+    ? baselinePlan.observationsPlanned
+    : [];
+
+  title.className = "lab-readiness-title";
+  title.textContent = "Baseline Observation Plan";
+  safetyNote.className = "lab-safety-note";
+  safetyNote.textContent = baselinePlan?.safetyNote || "Baseline observation planning is preview-only. No tests were executed.";
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Status", baselinePlan?.status || "skipped"),
+    createLabDetailRow("Reason", baselinePlan?.reason || "Baseline observation plan is unavailable."),
+    createLabDetailRow("Target forms", String(targetForms.length)),
+    createLabCategoryListBlock("Observations planned", observationsPlanned, "No observations are currently planned."),
+    safetyNote,
+  );
+}
+
+function createUnavailableBaselinePlan(reason) {
+  return {
+    status: "skipped",
+    reason,
+    targetForms: [],
+    observationsPlanned: [],
+    safetyNote: "Baseline observation planning was not executed. No forms were submitted and no input values were read.",
+  };
+}
+
+async function getLabBaselinePlanner() {
+  if (globalThis.LoginGuardLabBaselineObservation) {
+    return globalThis.LoginGuardLabBaselineObservation;
+  }
+
+  if (!labBaselinePlannerLoadPromise) {
+    labBaselinePlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabBaselineObservation) {
+          throw new Error("LoginGuard Lab baseline observation planner was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabBaselineObservation;
+      })
+      .catch((error) => {
+        labBaselinePlannerLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labBaselinePlannerLoadPromise;
 }
 
 function createLabCategoryListBlock(labelText, categories, emptyText) {
