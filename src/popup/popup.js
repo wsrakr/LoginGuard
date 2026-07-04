@@ -437,7 +437,7 @@ function ensureReportSection() {
   jsonButton.addEventListener("click", copyCurrentJsonReport);
   markdownButton.addEventListener("click", copyCurrentMarkdownReport);
   aiPromptButton.addEventListener("click", copyCurrentAiAnalystPrompt);
-  labSessionButton.addEventListener("click", openLabSession);
+  labSessionButton.addEventListener("click", openLabSessionPage);
 
   actions.append(jsonButton, markdownButton, aiPromptButton, labSessionButton);
   section.append(heading, actions, status);
@@ -447,14 +447,19 @@ function ensureReportSection() {
   reportStatus = status;
 }
 
-async function openLabSession() {
+async function openLabSessionPage() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const targetParam = tab?.id ? `?tabId=${encodeURIComponent(String(tab.id))}` : "";
+    const createProperties = {
+      url: chrome.runtime.getURL("src/lab/lab-session.html"),
+      active: true,
+    };
 
-    await chrome.tabs.create({
-      url: chrome.runtime.getURL(`src/lab/lab-session.html${targetParam}`),
-    });
+    if (tab?.id) {
+      createProperties.openerTabId = tab.id;
+    }
+
+    await chrome.tabs.create(createProperties);
   } catch (error) {
     setReportStatus(`Could not open Lab Session: ${error.message}`, "error");
   }

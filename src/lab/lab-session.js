@@ -112,6 +112,16 @@ async function resolveTargetTab() {
     }
   }
 
+  const currentSessionTab = await chrome.tabs.getCurrent();
+
+  if (typeof currentSessionTab?.openerTabId === "number") {
+    try {
+      return await chrome.tabs.get(currentSessionTab.openerTabId);
+    } catch (_error) {
+      return null;
+    }
+  }
+
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   return activeTab;

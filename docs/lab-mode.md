@@ -235,7 +235,7 @@ Lab reports do not include:
 
 Chrome extension popups close when focus changes, such as when a user switches back to another tab to paste a report. LoginGuard includes a persistent Lab Session page for Lab Mode work that should remain visible while the user changes focus.
 
-The popup provides an **Open Lab Session** button. It opens a normal extension tab that can show:
+The popup provides an **Open Lab Session** button. It opens `src/lab/lab-session.html` as a normal Chrome extension tab with `chrome.tabs.create`, so the Lab Session remains open after the popup closes or focus changes. The page can show:
 
 - Current target URL.
 - Lab Mode status.
