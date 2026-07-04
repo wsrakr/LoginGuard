@@ -95,6 +95,21 @@ For now, only these future-safe categories may pass readiness:
 
 The category `invalid-synthetic-credentials-observation` remains blocked until it receives additional review. This guard does not submit forms, run tests, read input values, or send network requests.
 
+## Execution Result Helpers
+
+LoginGuard also includes a Lab Mode execution result helper for future reporting work. The helper creates structured result records from execution readiness decisions, but it does not execute tests.
+
+The initial helper can create result records with these statuses:
+
+- `planned`
+- `blocked`
+- `skipped`
+- `error`
+
+There is intentionally no `executed` status yet. `buildInitialExecutionResults` records allowed categories as planned and blocked categories as blocked so future Lab reports can describe readiness decisions without running anything.
+
+Execution result records do not include input values, credentials, cookies, tokens, storage contents, or page HTML.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:
