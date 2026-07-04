@@ -9,6 +9,8 @@ This project uses a simple changelog format for early prototype milestones. Logi
 ### Added
 
 - Added Lab Mode JSON and Markdown report copy from the local Lab Mode test plan preview.
+- Added Lab Mode Safe Execution Confirmation Gate.
+- Added popup preview for execution confirmation status.
 
 ## v0.0.1 - Prototype Foundation
 

@@ -131,7 +131,7 @@ The planner records only safe form metadata:
 
 It may list descriptive observation names such as `current-url-before-action`, `form-method-and-action-presence`, `auth-like-input-metadata`, and `submit-control-presence-if-available`. These are labels for future reporting only. The planner does not submit forms, create test inputs, read input values, run payloads, or send network requests.
 
-## Execution Confirmation Gate
+## Safe Execution Confirmation Gate
 
 LoginGuard includes a Safe Execution Confirmation Gate for future Lab Mode execution work. The gate is a decision helper only. It does not execute tests, submit forms, read input values, or create synthetic inputs.
 
@@ -144,7 +144,25 @@ The confirmation gate may allow the `baseline-submit-observation` category only 
 - The baseline observation plan status is `planned`.
 - `baseline-submit-observation` appears in the readiness allowed categories.
 
-If any condition is missing, the gate returns `allowed: false`. This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only safety checks.
+If any condition is missing, the gate returns `allowed: false`. Even when the page is an allowed local lab context, execution readiness passes, and a baseline observation plan exists, Lab Mode still refuses future execution unless the user explicitly confirms.
+
+The current popup preview evaluates the gate with `userConfirmed: false`, so the expected confirmation status is:
+
+| Field | Current Preview Value |
+| --- | --- |
+| Confirmed | No |
+| Allowed | No |
+| Reason | Execution confirmation is refused because the user has not explicitly confirmed. |
+
+The confirmation gate does not:
+
+- Submit forms.
+- Execute tests.
+- Read input values.
+- Collect credentials.
+- Run payloads.
+
+This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only safety checks.
 
 ## Lab Mode Reports
 
