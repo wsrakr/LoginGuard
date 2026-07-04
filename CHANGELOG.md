@@ -13,6 +13,10 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added popup preview for execution confirmation status.
 - Added Baseline Observation Executor v0 for safe metadata-only lab observation.
 
+### Changed
+
+- Refined Lab Mode report safety note wording for metadata-only baseline observation results.
+
 ## v0.0.1 - Prototype Foundation
 
 Date: 2026-07-02

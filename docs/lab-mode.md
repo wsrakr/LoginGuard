@@ -196,7 +196,9 @@ It does not:
 - Run payloads.
 - Read cookies, tokens, storage contents, page HTML, or response bodies.
 
-If the executor runs, Lab reports may include the result under `executedTests`. If no baseline observation has been run, `executedTests` remains empty and reports state that no Lab Mode baseline observation has been run yet.
+If the executor runs, Lab reports may include the metadata-only result under `executedTests`. If no baseline observation has been run, `executedTests` remains empty and reports state that no Lab Mode baseline observation has been run yet.
+
+When `executedTests` is empty, the report safety note describes a local test plan only. When `executedTests` contains an approved metadata-only baseline observation result, the report safety note explains that the report includes metadata-only observations and that no forms were submitted, no input values were read, and no credentials were collected.
 
 ## Lab Mode Reports
 
@@ -207,7 +209,7 @@ Lab Mode Preview can copy local reports from the current Lab Mode test plan:
 
 These reports are generated locally from the existing Lab Mode plan shown in the popup. LoginGuard does not send Lab reports anywhere and does not store them automatically.
 
-Current Lab Mode does not execute tests yet. The `executedTests` field is intentionally empty by design.
+Current Lab Mode does not perform full active testing. The `executedTests` field is empty until the user runs the approved Baseline Observation Executor v0, which records metadata-only observations.
 
 Lab reports may include safe metadata already present in the Lab Mode plan:
 
@@ -217,7 +219,7 @@ Lab reports may include safe metadata already present in the Lab Mode plan:
 - Detected form metadata.
 - Detected input metadata.
 - Planned test categories.
-- `executedTests`.
+- `executedTests` containing metadata-only baseline observation results, when run.
 - Safety note.
 
 Lab reports do not include:

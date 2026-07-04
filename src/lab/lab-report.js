@@ -1,6 +1,7 @@
 // Lab Mode report builder for safe test plan previews. No tests are executed here.
 (() => {
-  const DEFAULT_SAFETY_NOTE = "Lab Mode report generated locally. No Lab Mode tests were executed, no forms were submitted, and no credentials were collected.";
+  const PLAN_ONLY_SAFETY_NOTE = "Lab Mode created a local test plan only. No forms were submitted and no credentials were collected.";
+  const METADATA_OBSERVATION_SAFETY_NOTE = "Lab Mode created a local test plan and includes approved metadata-only baseline observations. No forms were submitted, no input values were read, and no credentials were collected.";
 
   function buildLabJsonReport(labPlan, executionReadiness, executedTests = []) {
     const plan = labPlan || {};
@@ -10,6 +11,7 @@
     const readiness = sanitizeExecutionReadiness(executionReadiness);
     const initialExecutionResults = buildInitialExecutionResults(readiness);
     const baselineObservationPlan = buildBaselineObservationPlan(plan, readiness);
+    const safeExecutedTests = sanitizeExecutedTests(executedTests);
 
     return {
       project: "LoginGuard",
@@ -26,8 +28,8 @@
       executionReadiness: readiness,
       initialExecutionResults,
       baselineObservationPlan,
-      executedTests: sanitizeExecutedTests(executedTests),
-      safetyNote: String(plan.safetyNote || DEFAULT_SAFETY_NOTE),
+      executedTests: safeExecutedTests,
+      safetyNote: buildReportSafetyNote(safeExecutedTests),
     };
   }
 
@@ -293,6 +295,12 @@
       reason: String(result?.reason || ""),
       safetyNote: String(result?.safetyNote || ""),
     }));
+  }
+
+  function buildReportSafetyNote(executedTests) {
+    return executedTests.length > 0
+      ? METADATA_OBSERVATION_SAFETY_NOTE
+      : PLAN_ONLY_SAFETY_NOTE;
   }
 
   function sanitizeObservations(observations) {
