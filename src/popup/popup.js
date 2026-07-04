@@ -410,6 +410,7 @@ function ensureReportSection() {
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
   const aiPromptButton = document.createElement("button");
+  const labSessionButton = document.createElement("button");
   const status = document.createElement("p");
 
   section.className = "panel report-panel";
@@ -426,6 +427,9 @@ function ensureReportSection() {
   aiPromptButton.type = "button";
   aiPromptButton.className = "report-button";
   aiPromptButton.textContent = "Copy AI Analyst Prompt";
+  labSessionButton.type = "button";
+  labSessionButton.className = "report-button";
+  labSessionButton.textContent = "Open Lab Session";
   status.className = "report-status";
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -433,13 +437,27 @@ function ensureReportSection() {
   jsonButton.addEventListener("click", copyCurrentJsonReport);
   markdownButton.addEventListener("click", copyCurrentMarkdownReport);
   aiPromptButton.addEventListener("click", copyCurrentAiAnalystPrompt);
+  labSessionButton.addEventListener("click", openLabSession);
 
-  actions.append(jsonButton, markdownButton, aiPromptButton);
+  actions.append(jsonButton, markdownButton, aiPromptButton, labSessionButton);
   section.append(heading, actions, status);
   shell.append(section);
 
   reportSection = section;
   reportStatus = status;
+}
+
+async function openLabSession() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const targetParam = tab?.id ? `?tabId=${encodeURIComponent(String(tab.id))}` : "";
+
+    await chrome.tabs.create({
+      url: chrome.runtime.getURL(`src/lab/lab-session.html${targetParam}`),
+    });
+  } catch (error) {
+    setReportStatus(`Could not open Lab Session: ${error.message}`, "error");
+  }
 }
 
 async function copyCurrentJsonReport() {

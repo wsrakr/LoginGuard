@@ -231,6 +231,26 @@ Lab reports do not include:
 - Storage contents.
 - Page HTML.
 
+## Persistent Lab Session Page
+
+Chrome extension popups close when focus changes, such as when a user switches back to another tab to paste a report. LoginGuard includes a persistent Lab Session page for Lab Mode work that should remain visible while the user changes focus.
+
+The popup provides an **Open Lab Session** button. It opens a normal extension tab that can show:
+
+- Current target URL.
+- Lab Mode status.
+- Detected form and input counts.
+- Planned test categories.
+- Execution readiness.
+- Baseline observation plan.
+- Execution confirmation status.
+- Latest metadata-only baseline observation result, if run.
+- Lab JSON and Markdown report copy actions.
+
+The Lab Session page uses the same safe message flow as the popup. It does not store credentials, cookies, tokens, form values, page HTML, or storage contents. The latest metadata-only result may remain in page memory while the Lab Session tab is open.
+
+If no supported local lab target is available, the page shows: `Open a local lab fixture tab first, then return to this Lab Session page.`
+
 ## What Lab Mode Preview Does Not Do
 
 Lab Mode Preview does not:

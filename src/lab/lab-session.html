@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoginGuard Lab Session</title>
+    <link rel="stylesheet" href="lab-session.css">
+  </head>
+  <body>
+    <main class="session-shell">
+      <header class="session-header">
+        <div>
+          <h1>LoginGuard Lab Session</h1>
+          <p class="subtitle">Persistent local Lab Mode view</p>
+        </div>
+        <button id="refresh-session" class="button" type="button">Refresh</button>
+      </header>
+
+      <section class="panel" aria-labelledby="target-heading">
+        <h2 id="target-heading">Target</h2>
+        <p id="target-url" class="url-value">Loading target tab...</p>
+        <p id="session-status" class="status-text" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Lab Mode</h2>
+          <dl id="lab-summary" class="detail-list"></dl>
+        </article>
+
+        <article class="panel">
+          <h2>Execution Readiness</h2>
+          <dl id="readiness-summary" class="detail-list"></dl>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Planned Categories</h2>
+        <ul id="planned-categories" class="item-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Baseline Observation Plan</h2>
+        <dl id="baseline-plan" class="detail-list"></dl>
+        <ul id="baseline-observations" class="item-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Execution Confirmation</h2>
+        <dl id="confirmation-summary" class="detail-list"></dl>
+      </section>
+
+      <section class="panel">
+        <h2>Baseline Observation Result</h2>
+        <dl id="execution-result" class="detail-list"></dl>
+        <ul id="execution-observations" class="item-list"></ul>
+      </section>
+
+      <section class="panel actions-panel">
+        <h2>Actions</h2>
+        <div class="actions">
+          <button id="run-baseline" class="button is-hidden" type="button">Run Baseline Observation</button>
+          <button id="copy-json" class="button" type="button">Copy Lab JSON Report</button>
+          <button id="copy-markdown" class="button" type="button">Copy Lab Markdown Report</button>
+        </div>
+        <p id="action-status" class="status-text" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="lab-session.js" defer></script>
+  </body>
+</html>
