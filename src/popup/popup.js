@@ -49,6 +49,7 @@ let currentExecutionReadiness = null;
 let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
 let labBaselinePlannerLoadPromise = null;
+let labExecutionConfirmationLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   runPageCheck().catch((error) => {
@@ -579,13 +580,14 @@ function renderLabModePreview(labPlan, executionReadiness) {
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
+  const confirmationBlock = createExecutionConfirmationBlock(labPlan, currentExecutionReadiness);
   const safetyNote = document.createElement("p");
 
   safetyNote.className = "lab-safety-note";
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock);
+  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, confirmationBlock);
   setLabReportStatus("", "");
 }
 
@@ -768,6 +770,41 @@ function createBaselineObservationBlock(labPlan, readiness) {
   return block;
 }
 
+function createExecutionConfirmationBlock(labPlan, readiness) {
+  const block = document.createElement("div");
+
+  block.className = "lab-readiness lab-execution-confirmation";
+  fillExecutionConfirmationBlock(
+    block,
+    createUnavailableExecutionConfirmation("Execution confirmation gate is loading. No tests were executed."),
+  );
+
+  Promise.all([getLabBaselinePlanner(), getLabExecutionConfirmationGate()])
+    .then(([planner, confirmationGate]) => {
+      if (currentLabPlan !== labPlan || currentExecutionReadiness !== readiness) {
+        return;
+      }
+
+      const baselineObservationPlan = planner.buildBaselineObservationPlan(labPlan, readiness);
+      const confirmation = confirmationGate.evaluateExecutionConfirmation({
+        labPlan,
+        readiness,
+        baselineObservationPlan,
+        userConfirmed: false,
+      });
+
+      fillExecutionConfirmationBlock(block, confirmation);
+    })
+    .catch((error) => {
+      fillExecutionConfirmationBlock(
+        block,
+        createUnavailableExecutionConfirmation(`Execution confirmation gate is unavailable: ${error.message}`),
+      );
+    });
+
+  return block;
+}
+
 function fillBaselineObservationBlock(block, baselinePlan) {
   const title = document.createElement("p");
   const safetyNote = document.createElement("p");
@@ -791,6 +828,25 @@ function fillBaselineObservationBlock(block, baselinePlan) {
   );
 }
 
+function fillExecutionConfirmationBlock(block, confirmation) {
+  const title = document.createElement("p");
+  const safetyNote = document.createElement("p");
+
+  title.className = "lab-readiness-title";
+  title.textContent = "Execution Confirmation";
+  safetyNote.className = "lab-safety-note";
+  safetyNote.textContent = confirmation?.safetyNote || "Execution confirmation is preview-only. No tests were executed.";
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Confirmed", confirmation?.confirmed ? "Yes" : "No"),
+    createLabDetailRow("Allowed", confirmation?.allowed ? "Yes" : "No"),
+    createLabDetailRow("Reason", confirmation?.reason || "Execution confirmation is unavailable."),
+    createLabDetailRow("Category", confirmation?.category || "baseline-submit-observation"),
+    safetyNote,
+  );
+}
+
 function createUnavailableBaselinePlan(reason) {
   return {
     status: "skipped",
@@ -798,6 +854,16 @@ function createUnavailableBaselinePlan(reason) {
     targetForms: [],
     observationsPlanned: [],
     safetyNote: "Baseline observation planning was not executed. No forms were submitted and no input values were read.",
+  };
+}
+
+function createUnavailableExecutionConfirmation(reason) {
+  return {
+    confirmed: false,
+    allowed: false,
+    reason,
+    category: "baseline-submit-observation",
+    safetyNote: "Execution confirmation was not evaluated. No tests were executed and no forms were submitted.",
   };
 }
 
@@ -822,6 +888,29 @@ async function getLabBaselinePlanner() {
   }
 
   return labBaselinePlannerLoadPromise;
+}
+
+async function getLabExecutionConfirmationGate() {
+  if (globalThis.LoginGuardLabExecutionConfirmation) {
+    return globalThis.LoginGuardLabExecutionConfirmation;
+  }
+
+  if (!labExecutionConfirmationLoadPromise) {
+    labExecutionConfirmationLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-confirmation.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabExecutionConfirmation) {
+          throw new Error("LoginGuard Lab execution confirmation gate was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabExecutionConfirmation;
+      })
+      .catch((error) => {
+        labExecutionConfirmationLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labExecutionConfirmationLoadPromise;
 }
 
 function createLabCategoryListBlock(labelText, categories, emptyText) {
