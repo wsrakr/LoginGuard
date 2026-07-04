@@ -3,6 +3,7 @@
   const CONTENT_STATE_KEY = "__loginGuardContentInitialized";
   const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
   const LAB_PLAN_MESSAGE_TYPE = "LOGIN_GUARD_CREATE_LAB_PLAN";
+  const BASELINE_OBSERVATION_MESSAGE_TYPE = "LOGIN_GUARD_RUN_BASELINE_OBSERVATION";
 
   if (globalThis[CONTENT_STATE_KEY]) {
     return;
@@ -18,6 +19,11 @@
 
     if (message?.type === LAB_PLAN_MESSAGE_TYPE) {
       handleLabPlanMessage(message, sendResponse);
+      return false;
+    }
+
+    if (message?.type === BASELINE_OBSERVATION_MESSAGE_TYPE) {
+      handleBaselineObservationMessage(message, sendResponse);
       return false;
     }
 
@@ -70,6 +76,32 @@
         ok: true,
         labPlan,
         executionReadiness,
+      });
+    } catch (error) {
+      sendResponse({
+        ok: false,
+        error: error.message,
+      });
+    }
+  }
+
+  function handleBaselineObservationMessage(message, sendResponse) {
+    try {
+      const baselineExecutor = globalThis.LoginGuardLabBaselineExecutor;
+
+      if (!baselineExecutor) {
+        throw new Error("LoginGuard Lab Baseline Executor was not loaded.");
+      }
+
+      sendResponse({
+        ok: true,
+        executionResult: baselineExecutor.runBaselineObservation({
+          document,
+          labPlan: message.labPlan || null,
+          readiness: message.readiness || null,
+          baselineObservationPlan: message.baselineObservationPlan || null,
+          userConfirmed: message.userConfirmed === true,
+        }),
       });
     } catch (error) {
       sendResponse({

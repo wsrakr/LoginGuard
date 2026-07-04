@@ -2,7 +2,7 @@
 (() => {
   const DEFAULT_SAFETY_NOTE = "Lab Mode report generated locally. No Lab Mode tests were executed, no forms were submitted, and no credentials were collected.";
 
-  function buildLabJsonReport(labPlan, executionReadiness) {
+  function buildLabJsonReport(labPlan, executionReadiness, executedTests = []) {
     const plan = labPlan || {};
     const detectedForms = sanitizeDetectedForms(plan.detectedForms);
     const detectedInputs = sanitizeDetectedInputs(plan.detectedInputs);
@@ -26,13 +26,13 @@
       executionReadiness: readiness,
       initialExecutionResults,
       baselineObservationPlan,
-      executedTests: [],
+      executedTests: sanitizeExecutedTests(executedTests),
       safetyNote: String(plan.safetyNote || DEFAULT_SAFETY_NOTE),
     };
   }
 
-  function buildLabMarkdownReport(labPlan, executionReadiness) {
-    const report = buildLabJsonReport(labPlan, executionReadiness);
+  function buildLabMarkdownReport(labPlan, executionReadiness, executedTests = []) {
+    const report = buildLabJsonReport(labPlan, executionReadiness, executedTests);
     const lines = [
       "# LoginGuard Lab Mode Report",
       "",
@@ -115,7 +115,27 @@
     lines.push(`Safety note: ${toMarkdownText(report.baselineObservationPlan.safetyNote)}`);
 
     lines.push("", "## Executed Tests", "");
-    lines.push("None. Lab Mode Preview does not execute tests yet.");
+
+    if (report.executedTests.length === 0) {
+      lines.push("None. No Lab Mode baseline observation has been run yet.");
+    } else {
+      report.executedTests.forEach((result) => {
+        lines.push(`- ${toMarkdownText(result.category)}: status=${toMarkdownText(result.status)}, reason=${toMarkdownText(result.reason)}`);
+        lines.push(`  - Started: ${toMarkdownText(result.startedAt || "n/a")}`);
+        lines.push(`  - Finished: ${toMarkdownText(result.finishedAt || "n/a")}`);
+        lines.push(`  - Safety note: ${toMarkdownText(result.safetyNote)}`);
+
+        if (result.observations.length === 0) {
+          lines.push("  - Observations: none.");
+        } else {
+          lines.push("  - Observations:");
+          result.observations.forEach((observation) => {
+            lines.push(`    - ${toMarkdownText(observation.name)}: ${toMarkdownText(JSON.stringify(observation.data || {}))}`);
+          });
+        }
+      });
+    }
+
     lines.push("", "## Safety Note", "");
     lines.push(toMarkdownText(report.safetyNote), "");
 
@@ -256,6 +276,61 @@
       reason: String(result?.reason || ""),
       safetyNote: String(result?.safetyNote || ""),
     };
+  }
+
+  function sanitizeExecutedTests(results) {
+    if (!Array.isArray(results)) {
+      return [];
+    }
+
+    return results.map((result) => ({
+      id: String(result?.id || ""),
+      category: String(result?.category || ""),
+      status: ["blocked", "skipped", "error", "executed"].includes(result?.status) ? result.status : "error",
+      startedAt: result?.startedAt ? String(result.startedAt) : null,
+      finishedAt: result?.finishedAt ? String(result.finishedAt) : null,
+      observations: sanitizeObservations(result?.observations),
+      reason: String(result?.reason || ""),
+      safetyNote: String(result?.safetyNote || ""),
+    }));
+  }
+
+  function sanitizeObservations(observations) {
+    if (!Array.isArray(observations)) {
+      return [];
+    }
+
+    return observations.map((observation) => ({
+      name: String(observation?.name || ""),
+      data: sanitizeObservationData(observation?.data),
+      safetyNote: String(observation?.safetyNote || ""),
+    }));
+  }
+
+  function sanitizeObservationData(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [String(key), sanitizeObservationValue(value)]),
+    );
+  }
+
+  function sanitizeObservationValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(sanitizeObservationValue);
+    }
+
+    if (value && typeof value === "object") {
+      return sanitizeObservationData(value);
+    }
+
+    if (typeof value === "boolean" || typeof value === "number" || value === null) {
+      return value;
+    }
+
+    return String(value || "");
   }
 
   function sanitizeCategoryList(categories) {

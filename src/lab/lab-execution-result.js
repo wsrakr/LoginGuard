@@ -1,7 +1,7 @@
 // Lab Mode execution result helpers for future local-only execution reporting.
 (() => {
-  const SAFETY_NOTE = "Lab Mode execution result helpers only create report records. They do not execute tests, submit forms, or read input values.";
-  const RESULT_STATUSES = new Set(["planned", "blocked", "skipped", "error"]);
+  const SAFETY_NOTE = "Lab Mode execution result helpers create report records only. Executed status is reserved for approved safe metadata observation results.";
+  const RESULT_STATUSES = new Set(["planned", "blocked", "skipped", "error", "executed"]);
 
   function createPlannedResult(category, reason) {
     return createResult("planned", category, reason || "This category is planned for future local Lab Mode execution.");
@@ -17,6 +17,19 @@
 
   function createErrorResult(category, reason) {
     return createResult("error", category, reason || "This category could not be prepared for reporting. No test was executed.");
+  }
+
+  function createExecutedResult(category, reason, observations = []) {
+    const startedAt = new Date().toISOString();
+    const finishedAt = new Date().toISOString();
+    const result = createResult("executed", category, reason || "This category recorded safe metadata observations.");
+
+    return {
+      ...result,
+      startedAt,
+      finishedAt,
+      observations: Array.isArray(observations) ? observations : [],
+    };
   }
 
   function buildInitialExecutionResults(readiness) {
@@ -60,6 +73,7 @@
     createBlockedResult,
     createSkippedResult,
     createErrorResult,
+    createExecutedResult,
     buildInitialExecutionResults,
   };
 })();

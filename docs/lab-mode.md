@@ -164,6 +164,40 @@ The confirmation gate does not:
 
 This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only safety checks.
 
+## Baseline Observation Executor v0
+
+LoginGuard includes Baseline Observation Executor v0 for local Lab Mode pages. This is the first controlled Lab Mode executor, and it is intentionally limited to safe metadata observation.
+
+The executor may run only after:
+
+- The page is an approved local lab context.
+- Execution readiness allows `baseline-submit-observation`.
+- A baseline observation plan exists with status `planned`.
+- The Safe Execution Confirmation Gate allows the action.
+- The popup sends an explicit `userConfirmed: true` request.
+
+Baseline Observation Executor v0 records only safe observations:
+
+- Current URL before observation.
+- Total form count.
+- Target form count.
+- Form method and action presence.
+- Authentication-like input metadata count.
+- Submit-control presence when observable.
+
+It does not:
+
+- Submit forms.
+- Trigger clicks.
+- Dispatch submit events.
+- Create synthetic input values.
+- Read input values.
+- Collect credentials.
+- Run payloads.
+- Read cookies, tokens, storage contents, page HTML, or response bodies.
+
+If the executor runs, Lab reports may include the result under `executedTests`. If no baseline observation has been run, `executedTests` remains empty and reports state that no Lab Mode baseline observation has been run yet.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:

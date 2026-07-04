@@ -222,6 +222,10 @@ h2 {
   outline-offset: 2px;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 .report-status {
   min-height: 18px;
   color: var(--muted);

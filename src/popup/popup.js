@@ -1,6 +1,7 @@
 // Popup controller that requests active-tab analysis and renders the result.
 const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
 const LAB_PLAN_MESSAGE_TYPE = "LOGIN_GUARD_CREATE_LAB_PLAN";
+const BASELINE_OBSERVATION_MESSAGE_TYPE = "LOGIN_GUARD_RUN_BASELINE_OBSERVATION";
 const GET_SECURITY_HEADERS_MESSAGE = "LOGIN_GUARD_GET_SECURITY_HEADERS";
 const INJECTION_FILES = [
   "src/utils/dom-utils.js",
@@ -13,6 +14,9 @@ const INJECTION_FILES = [
   "src/core/scanner.js",
   "src/lab/lab-context.js",
   "src/lab/lab-execution-guard.js",
+  "src/lab/lab-execution-confirmation.js",
+  "src/lab/lab-baseline-observation.js",
+  "src/lab/lab-baseline-executor.js",
   "src/lab/lab-runner.js",
   "src/content/content.js",
 ];
@@ -43,9 +47,13 @@ let reportStatus = null;
 let labSection = null;
 let labDetails = null;
 let labReportStatus = null;
+let labRunButton = null;
+let labExecutionResultBlock = null;
 let currentAnalysis = null;
 let currentLabPlan = null;
 let currentExecutionReadiness = null;
+let currentBaselineObservationPlan = null;
+let currentBaselineExecutionResult = null;
 let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
 let labBaselinePlannerLoadPromise = null;
@@ -194,6 +202,8 @@ function renderUnsupportedPage(url) {
   currentAnalysis = null;
   currentLabPlan = null;
   currentExecutionReadiness = null;
+  currentBaselineObservationPlan = null;
+  currentBaselineExecutionResult = null;
 
   setCard(cards.https, elements.httpsStatus, "N/A", "warning");
   setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
@@ -215,6 +225,8 @@ function renderError(error) {
   currentAnalysis = null;
   currentLabPlan = null;
   currentExecutionReadiness = null;
+  currentBaselineObservationPlan = null;
+  currentBaselineExecutionResult = null;
 
   setCard(cards.https, elements.httpsStatus, "Error", "danger");
   setCard(cards.login, elements.loginStatus, "Error", "danger");
@@ -559,12 +571,16 @@ function renderLabModePreview(labPlan, executionReadiness) {
   if (!labPlan) {
     currentLabPlan = null;
     currentExecutionReadiness = null;
+    currentBaselineObservationPlan = null;
+    currentBaselineExecutionResult = null;
     hideLabModePreview();
     return;
   }
 
   currentLabPlan = labPlan;
   currentExecutionReadiness = executionReadiness || createFallbackExecutionReadiness("Lab Mode execution readiness was not evaluated.");
+  currentBaselineObservationPlan = null;
+  currentBaselineExecutionResult = null;
   ensureLabModeSection();
 
   const statusText = labPlan.allowed ? "Allowed" : "Refused";
@@ -581,13 +597,15 @@ function renderLabModePreview(labPlan, executionReadiness) {
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
   const confirmationBlock = createExecutionConfirmationBlock(labPlan, currentExecutionReadiness);
+  const executionResultBlock = createBaselineExecutionResultBlock();
   const safetyNote = document.createElement("p");
 
   safetyNote.className = "lab-safety-note";
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, confirmationBlock);
+  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, confirmationBlock, executionResultBlock);
+  updateBaselineRunButton();
   setLabReportStatus("", "");
 }
 
@@ -603,6 +621,7 @@ function ensureLabModeSection() {
   const actions = document.createElement("div");
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
+  const runButton = document.createElement("button");
   const status = document.createElement("p");
 
   section.className = "panel lab-panel";
@@ -617,20 +636,25 @@ function ensureLabModeSection() {
   markdownButton.type = "button";
   markdownButton.className = "report-button";
   markdownButton.textContent = "Copy Lab Markdown Report";
+  runButton.type = "button";
+  runButton.className = "report-button lab-run-button is-hidden";
+  runButton.textContent = "Run Baseline Observation";
   status.className = "lab-report-status";
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
 
   jsonButton.addEventListener("click", copyCurrentLabJsonReport);
   markdownButton.addEventListener("click", copyCurrentLabMarkdownReport);
+  runButton.addEventListener("click", runCurrentBaselineObservation);
 
-  actions.append(jsonButton, markdownButton);
+  actions.append(jsonButton, markdownButton, runButton);
   section.append(heading, details, actions, status);
   shell.append(section);
 
   labSection = section;
   labDetails = details;
   labReportStatus = status;
+  labRunButton = runButton;
 }
 
 async function copyCurrentLabJsonReport() {
@@ -645,7 +669,11 @@ async function copyCurrentLabJsonReport() {
     }
 
     const labReport = await getLabReportBuilder();
-    const reportJson = JSON.stringify(labReport.buildLabJsonReport(currentLabPlan, currentExecutionReadiness), null, 2);
+    const reportJson = JSON.stringify(labReport.buildLabJsonReport(
+      currentLabPlan,
+      currentExecutionReadiness,
+      getExecutedLabResults(),
+    ), null, 2);
     JSON.parse(reportJson);
 
     await navigator.clipboard.writeText(reportJson);
@@ -668,7 +696,11 @@ async function copyCurrentLabMarkdownReport() {
 
     const labReport = await getLabReportBuilder();
 
-    await navigator.clipboard.writeText(labReport.buildLabMarkdownReport(currentLabPlan, currentExecutionReadiness));
+    await navigator.clipboard.writeText(labReport.buildLabMarkdownReport(
+      currentLabPlan,
+      currentExecutionReadiness,
+      getExecutedLabResults(),
+    ));
     setLabReportStatus("Lab Markdown report copied locally.", "success");
   } catch (error) {
     setLabReportStatus(`Could not copy Lab Markdown report: ${error.message}`, "error");
@@ -758,7 +790,9 @@ function createBaselineObservationBlock(labPlan, readiness) {
       }
 
       const baselinePlan = planner.buildBaselineObservationPlan(labPlan, readiness);
+      currentBaselineObservationPlan = baselinePlan;
       fillBaselineObservationBlock(block, baselinePlan);
+      updateBaselineRunButton();
     })
     .catch((error) => {
       fillBaselineObservationBlock(
@@ -805,6 +839,16 @@ function createExecutionConfirmationBlock(labPlan, readiness) {
   return block;
 }
 
+function createBaselineExecutionResultBlock() {
+  const block = document.createElement("div");
+
+  block.className = "lab-readiness lab-baseline-result";
+  labExecutionResultBlock = block;
+  fillBaselineExecutionResultBlock(block, currentBaselineExecutionResult);
+
+  return block;
+}
+
 function fillBaselineObservationBlock(block, baselinePlan) {
   const title = document.createElement("p");
   const safetyNote = document.createElement("p");
@@ -845,6 +889,44 @@ function fillExecutionConfirmationBlock(block, confirmation) {
     createLabDetailRow("Category", confirmation?.category || "baseline-submit-observation"),
     safetyNote,
   );
+}
+
+function fillBaselineExecutionResultBlock(block, result) {
+  const title = document.createElement("p");
+
+  title.className = "lab-readiness-title";
+  title.textContent = "Baseline Observation Result";
+
+  if (!result) {
+    const note = document.createElement("p");
+
+    note.className = "lab-safety-note";
+    note.textContent = "No baseline observation has been run yet.";
+    block.replaceChildren(title, note);
+    return;
+  }
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Status", result.status || "unknown"),
+    createLabDetailRow("Reason", result.reason || "No reason provided."),
+    createLabDetailRow("Observations", String(Array.isArray(result.observations) ? result.observations.length : 0)),
+    createLabCategoryListBlock(
+      "Observation names",
+      Array.isArray(result.observations) ? result.observations.map((observation) => observation?.name).filter(Boolean) : [],
+      "No observation names recorded.",
+    ),
+    createLabSafetyNote(result.safetyNote || "Baseline observation recorded safe metadata only."),
+  );
+}
+
+function createLabSafetyNote(text) {
+  const note = document.createElement("p");
+
+  note.className = "lab-safety-note";
+  note.textContent = text;
+
+  return note;
 }
 
 function createUnavailableBaselinePlan(reason) {
@@ -913,6 +995,74 @@ async function getLabExecutionConfirmationGate() {
   return labExecutionConfirmationLoadPromise;
 }
 
+async function runCurrentBaselineObservation() {
+  if (!currentLabPlan || !currentExecutionReadiness || !currentBaselineObservationPlan) {
+    setLabReportStatus("Baseline observation is not ready for this page.", "error");
+    return;
+  }
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || typeof tab.id !== "number") {
+      throw new Error("No active tab is available.");
+    }
+
+    const executionResult = await sendBaselineObservationMessage(tab.id, {
+      labPlan: currentLabPlan,
+      readiness: currentExecutionReadiness,
+      baselineObservationPlan: currentBaselineObservationPlan,
+      userConfirmed: true,
+    });
+
+    currentBaselineExecutionResult = executionResult;
+    fillBaselineExecutionResultBlock(labExecutionResultBlock, executionResult);
+    setLabReportStatus("Baseline observation recorded safe metadata locally.", "success");
+  } catch (error) {
+    setLabReportStatus(`Could not run baseline observation: ${error.message}`, "error");
+  }
+}
+
+function sendBaselineObservationMessage(tabId, payload) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, {
+      type: BASELINE_OBSERVATION_MESSAGE_TYPE,
+      ...payload,
+    }, (response) => {
+      const lastError = chrome.runtime.lastError;
+
+      if (lastError) {
+        reject(new Error(lastError.message));
+        return;
+      }
+
+      if (!response || !response.ok) {
+        reject(new Error(response?.error || "Baseline observation could not be run."));
+        return;
+      }
+
+      resolve(response.executionResult);
+    });
+  });
+}
+
+function updateBaselineRunButton() {
+  if (!labRunButton) {
+    return;
+  }
+
+  const canRun = currentLabPlan?.allowed === true
+    && currentExecutionReadiness?.allowed === true
+    && currentBaselineObservationPlan?.status === "planned";
+
+  labRunButton.classList.toggle("is-hidden", !canRun);
+  labRunButton.disabled = !canRun;
+}
+
+function getExecutedLabResults() {
+  return currentBaselineExecutionResult ? [currentBaselineExecutionResult] : [];
+}
+
 function createLabCategoryListBlock(labelText, categories, emptyText) {
   const block = document.createElement("div");
   const label = document.createElement("p");
@@ -955,8 +1105,12 @@ function hideLabModePreview() {
   labSection = null;
   labDetails = null;
   labReportStatus = null;
+  labRunButton = null;
+  labExecutionResultBlock = null;
   currentLabPlan = null;
   currentExecutionReadiness = null;
+  currentBaselineObservationPlan = null;
+  currentBaselineExecutionResult = null;
 }
 
 function getConfidenceState(confidenceScore) {
