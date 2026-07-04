@@ -49,14 +49,27 @@
   function handleLabPlanMessage(message, sendResponse) {
     try {
       const labRunner = globalThis.LoginGuardLabRunner;
+      const executionGuard = globalThis.LoginGuardLabExecutionGuard;
 
       if (!labRunner) {
         throw new Error("LoginGuard Lab Runner was not loaded.");
       }
 
+      const labPlan = labRunner.createLabTestPlan(document, message.context || {});
+      const executionReadiness = executionGuard?.evaluateExecutionReadiness
+        ? executionGuard.evaluateExecutionReadiness(labPlan)
+        : {
+            allowed: false,
+            reason: "LoginGuard Lab Execution Guard was not loaded.",
+            allowedCategories: [],
+            blockedCategories: [],
+            safetyNote: "Lab Mode execution readiness could not be evaluated. No tests were executed.",
+          };
+
       sendResponse({
         ok: true,
-        labPlan: labRunner.createLabTestPlan(document, message.context || {}),
+        labPlan,
+        executionReadiness,
       });
     } catch (error) {
       sendResponse({

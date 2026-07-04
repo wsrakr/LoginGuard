@@ -12,6 +12,7 @@ const INJECTION_FILES = [
   "src/core/risk-engine.js",
   "src/core/scanner.js",
   "src/lab/lab-context.js",
+  "src/lab/lab-execution-guard.js",
   "src/lab/lab-runner.js",
   "src/content/content.js",
 ];
@@ -44,6 +45,7 @@ let labDetails = null;
 let labReportStatus = null;
 let currentAnalysis = null;
 let currentLabPlan = null;
+let currentExecutionReadiness = null;
 let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
 
@@ -74,8 +76,8 @@ async function runPageCheck() {
 
   const responseHeaders = await getSecurityHeaders(tab.id, tab.url);
   const analysis = await sendAnalyzeMessage(tab.id, responseHeaders);
-  const labPlan = await sendLabPlanMessage(tab.id, tab.url);
-  renderAnalysis(analysis, labPlan);
+  const labModeResult = await sendLabPlanMessage(tab.id, tab.url);
+  renderAnalysis(analysis, labModeResult.labPlan, labModeResult.executionReadiness);
 }
 
 function sendAnalyzeMessage(tabId, responseHeaders) {
@@ -129,26 +131,35 @@ function sendLabPlanMessage(tabId, url) {
       const lastError = chrome.runtime.lastError;
 
       if (lastError || !response?.ok) {
-        resolve({
+        const reason = response?.error || lastError?.message || "Lab Mode plan could not be created.";
+        const labPlan = {
           allowed: false,
           url: url || "",
-          reason: response?.error || lastError?.message || "Lab Mode plan could not be created.",
+          reason,
           tests: [],
           safetyNote: "Lab Mode preview is unavailable for this page.",
+        };
+
+        resolve({
+          labPlan,
+          executionReadiness: createFallbackExecutionReadiness(reason),
         });
         return;
       }
 
       const labPlan = response.labPlan || {};
       resolve({
-        ...labPlan,
-        url: labPlan.url || url || "",
+        labPlan: {
+          ...labPlan,
+          url: labPlan.url || url || "",
+        },
+        executionReadiness: response.executionReadiness || createFallbackExecutionReadiness("Lab Mode execution readiness was not returned."),
       });
     });
   });
 }
 
-function renderAnalysis(analysis, labPlan) {
+function renderAnalysis(analysis, labPlan, executionReadiness) {
   currentAnalysis = analysis;
 
   const login = analysis.modules.login;
@@ -174,12 +185,13 @@ function renderAnalysis(analysis, labPlan) {
   renderHeaders(analysis.modules.headers);
   renderFindings(analysis.findings);
   renderReportControls(analysis);
-  renderLabModePreview(labPlan);
+  renderLabModePreview(labPlan, executionReadiness);
 }
 
 function renderUnsupportedPage(url) {
   currentAnalysis = null;
   currentLabPlan = null;
+  currentExecutionReadiness = null;
 
   setCard(cards.https, elements.httpsStatus, "N/A", "warning");
   setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
@@ -200,6 +212,7 @@ function renderUnsupportedPage(url) {
 function renderError(error) {
   currentAnalysis = null;
   currentLabPlan = null;
+  currentExecutionReadiness = null;
 
   setCard(cards.https, elements.httpsStatus, "Error", "danger");
   setCard(cards.login, elements.loginStatus, "Error", "danger");
@@ -540,14 +553,16 @@ function hideReportControls() {
   reportStatus = null;
 }
 
-function renderLabModePreview(labPlan) {
+function renderLabModePreview(labPlan, executionReadiness) {
   if (!labPlan) {
     currentLabPlan = null;
+    currentExecutionReadiness = null;
     hideLabModePreview();
     return;
   }
 
   currentLabPlan = labPlan;
+  currentExecutionReadiness = executionReadiness || createFallbackExecutionReadiness("Lab Mode execution readiness was not evaluated.");
   ensureLabModeSection();
 
   const statusText = labPlan.allowed ? "Allowed" : "Refused";
@@ -561,13 +576,14 @@ function renderLabModePreview(labPlan) {
     createLabDetailRow("Detected inputs", String(Array.isArray(labPlan.detectedInputs) ? labPlan.detectedInputs.length : 0)),
   ];
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
+  const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const safetyNote = document.createElement("p");
 
   safetyNote.className = "lab-safety-note";
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote);
+  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock);
   setLabReportStatus("", "");
 }
 
@@ -692,14 +708,43 @@ function createLabDetailRow(label, value) {
 }
 
 function createLabCategoriesBlock(categories) {
+  return createLabCategoryListBlock("Planned categories", categories, "No planned categories for this page.");
+}
+
+function createExecutionReadinessBlock(readiness) {
+  const block = document.createElement("div");
+  const title = document.createElement("p");
+  const safetyNote = document.createElement("p");
+  const allowedCategories = Array.isArray(readiness?.allowedCategories) ? readiness.allowedCategories : [];
+  const blockedCategories = Array.isArray(readiness?.blockedCategories) ? readiness.blockedCategories : [];
+
+  block.className = "lab-readiness";
+  title.className = "lab-readiness-title";
+  title.textContent = "Execution Readiness";
+  safetyNote.className = "lab-safety-note";
+  safetyNote.textContent = readiness?.safetyNote || "Lab Mode execution readiness is display-only. No tests were executed.";
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Status", readiness?.allowed ? "Allowed" : "Refused"),
+    createLabDetailRow("Reason", readiness?.reason || "Execution readiness could not be evaluated."),
+    createLabCategoryListBlock("Allowed categories", allowedCategories, "No categories currently allowed."),
+    createLabCategoryListBlock("Blocked categories", blockedCategories, "No categories currently blocked."),
+    safetyNote,
+  );
+
+  return block;
+}
+
+function createLabCategoryListBlock(labelText, categories, emptyText) {
   const block = document.createElement("div");
   const label = document.createElement("p");
   const list = document.createElement("ul");
-  const categoryItems = categories.length > 0 ? categories : ["No planned categories for this page."];
+  const categoryItems = categories.length > 0 ? categories : [emptyText];
 
   block.className = "lab-categories";
   label.className = "lab-categories-label";
-  label.textContent = "Planned categories";
+  label.textContent = labelText;
   list.className = "lab-category-list";
   list.replaceChildren(
     ...categoryItems.map((category) => {
@@ -714,6 +759,16 @@ function createLabCategoriesBlock(categories) {
   return block;
 }
 
+function createFallbackExecutionReadiness(reason) {
+  return {
+    allowed: false,
+    reason,
+    allowedCategories: [],
+    blockedCategories: [],
+    safetyNote: "Lab Mode execution readiness could not be evaluated. No tests were executed.",
+  };
+}
+
 function hideLabModePreview() {
   if (!labSection) {
     return;
@@ -724,6 +779,7 @@ function hideLabModePreview() {
   labDetails = null;
   labReportStatus = null;
   currentLabPlan = null;
+  currentExecutionReadiness = null;
 }
 
 function getConfidenceState(confidenceScore) {
