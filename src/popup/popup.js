@@ -678,6 +678,7 @@ async function getLabReportBuilder() {
 
   if (!labReportLoadPromise) {
     labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
