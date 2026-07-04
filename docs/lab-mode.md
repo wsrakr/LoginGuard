@@ -131,6 +131,21 @@ The planner records only safe form metadata:
 
 It may list descriptive observation names such as `current-url-before-action`, `form-method-and-action-presence`, `auth-like-input-metadata`, and `submit-control-presence-if-available`. These are labels for future reporting only. The planner does not submit forms, create test inputs, read input values, run payloads, or send network requests.
 
+## Execution Confirmation Gate
+
+LoginGuard includes a Safe Execution Confirmation Gate for future Lab Mode execution work. The gate is a decision helper only. It does not execute tests, submit forms, read input values, or create synthetic inputs.
+
+The confirmation gate may allow the `baseline-submit-observation` category only when all of these conditions are true:
+
+- The user has explicitly confirmed.
+- The Lab Mode plan exists and is allowed.
+- Execution readiness exists and is allowed.
+- A baseline observation plan exists.
+- The baseline observation plan status is `planned`.
+- `baseline-submit-observation` appears in the readiness allowed categories.
+
+If any condition is missing, the gate returns `allowed: false`. This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only safety checks.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:
