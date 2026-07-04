@@ -1,17 +1,16 @@
 // Content script bridge that exposes current-page scan results to the popup.
 (() => {
-  const CONTENT_STATE_KEY = "__loginGuardContentInitialized";
+  const CONTENT_STATE_KEY = "__loginGuardContentState";
   const MESSAGE_TYPE = "LOGIN_GUARD_ANALYZE";
   const LAB_PLAN_MESSAGE_TYPE = "LOGIN_GUARD_CREATE_LAB_PLAN";
   const BASELINE_OBSERVATION_MESSAGE_TYPE = "LOGIN_GUARD_RUN_BASELINE_OBSERVATION";
+  const previousState = globalThis[CONTENT_STATE_KEY];
 
-  if (globalThis[CONTENT_STATE_KEY]) {
-    return;
+  if (previousState?.listener) {
+    chrome.runtime.onMessage.removeListener(previousState.listener);
   }
 
-  globalThis[CONTENT_STATE_KEY] = true;
-
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  const listener = (message, _sender, sendResponse) => {
     if (message?.type === MESSAGE_TYPE) {
       handleAnalyzeMessage(message, sendResponse);
       return false;
@@ -28,7 +27,10 @@
     }
 
     return false;
-  });
+  };
+
+  globalThis[CONTENT_STATE_KEY] = { listener };
+  chrome.runtime.onMessage.addListener(listener);
 
   function handleAnalyzeMessage(message, sendResponse) {
     try {
@@ -87,15 +89,17 @@
 
   function handleBaselineObservationMessage(message, sendResponse) {
     try {
-      const baselineExecutor = globalThis.LoginGuardLabBaselineExecutor;
+      const baselineExecutor = requireLabDependency("LoginGuardLabBaselineExecutor");
 
-      if (!baselineExecutor) {
-        throw new Error("LoginGuard Lab Baseline Executor was not loaded.");
-      }
+      requireLabDependency("LoginGuardLabContext");
+      requireLabDependency("LoginGuardLabRunner");
+      requireLabDependency("LoginGuardLabExecutionGuard");
+      requireLabDependency("LoginGuardLabBaselineObservation");
+      requireLabDependency("LoginGuardLabExecutionConfirmation");
 
       sendResponse({
         ok: true,
-        executionResult: baselineExecutor.runBaselineObservation({
+        result: baselineExecutor.runBaselineObservation({
           document,
           labPlan: message.labPlan || null,
           readiness: message.readiness || null,
@@ -109,5 +113,15 @@
         error: error.message,
       });
     }
+  }
+
+  function requireLabDependency(name) {
+    const dependency = globalThis[name];
+
+    if (!dependency) {
+      throw new Error(`Missing Lab Mode dependency: ${name}`);
+    }
+
+    return dependency;
   }
 })();

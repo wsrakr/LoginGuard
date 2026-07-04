@@ -1041,7 +1041,7 @@ function sendBaselineObservationMessage(tabId, payload) {
         return;
       }
 
-      resolve(response.executionResult);
+      resolve(response.result || response.executionResult);
     });
   });
 }
