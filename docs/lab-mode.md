@@ -72,6 +72,13 @@ The popup Lab Mode Preview shows:
 
 Available lab checks are product labels for controlled lab workflow steps. Raw technical category IDs remain available in technical details and reports for developers and future automation.
 
+The popup and Lab Session display check availability with text badges so users do not need to read raw category IDs:
+
+- **Available** for checks that can currently be used in the approved lab context.
+- **Planned** for checks that are designed or planned but not currently executable.
+- **Blocked for now** for checks intentionally held back until additional safeguards exist.
+- **Unknown** for categories without a registry definition.
+
 Example planned categories may include:
 
 - `baseline-submit-observation`

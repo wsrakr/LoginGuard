@@ -8,6 +8,8 @@
   --border: #d7deea;
   --ready: #0f8a5f;
   --priority: #b42318;
+  --planned: #175cd3;
+  --neutral: #667085;
   --shadow: 0 10px 26px rgba(29, 41, 57, 0.1);
 }
 
@@ -124,7 +126,7 @@ h2 {
   line-height: 1.4;
 }
 
-.check-item {
+.check-card {
   display: grid;
   gap: 4px;
   border-radius: 6px;
@@ -132,15 +134,56 @@ h2 {
   padding: 10px;
 }
 
-.check-item strong {
+.check-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.check-title {
   color: var(--text);
   font-size: 13px;
 }
 
-.check-item span {
+.check-card > span {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
+}
+
+.check-badge {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.check-badge.available {
+  border-color: color-mix(in srgb, var(--ready) 44%, var(--border));
+  background: color-mix(in srgb, var(--ready) 12%, var(--surface));
+  color: var(--ready);
+}
+
+.check-badge.planned {
+  border-color: color-mix(in srgb, var(--planned) 42%, var(--border));
+  background: color-mix(in srgb, var(--planned) 10%, var(--surface));
+  color: var(--planned);
+}
+
+.check-badge.blocked {
+  border-color: color-mix(in srgb, var(--priority) 36%, var(--border));
+  background: color-mix(in srgb, var(--priority) 8%, var(--surface));
+  color: var(--priority);
+}
+
+.check-badge.unknown {
+  border-color: color-mix(in srgb, var(--neutral) 36%, var(--border));
+  background: color-mix(in srgb, var(--neutral) 8%, var(--surface));
+  color: var(--neutral);
 }
 
 .technical-details {

@@ -322,19 +322,43 @@ function renderLabChecks(container, checks, emptyText) {
   container.replaceChildren(
     ...checkItems.map((check) => {
       const listItem = document.createElement("li");
+      const header = document.createElement("div");
       const title = document.createElement("strong");
       const description = document.createElement("span");
-      const status = document.createElement("span");
+      const badge = document.createElement("span");
 
-      listItem.className = "check-item";
+      listItem.className = "check-card";
+      header.className = "check-card-header";
+      title.className = "check-title";
       title.textContent = check.label || check.category || "Unknown Lab Check";
+      badge.className = `check-badge ${getCheckBadgeClass(check)}`;
+      badge.textContent = check.defaultStatusLabel || check.availability || "Unknown";
       description.textContent = check.shortDescription || "No description available.";
-      status.textContent = check.defaultStatusLabel || check.availability || "Unknown";
-      listItem.append(title, description, status);
+      header.append(title, badge);
+      listItem.append(header, description);
 
       return listItem;
     }),
   );
+}
+
+function getCheckBadgeClass(definition) {
+  const availability = String(definition?.availability || "").toLowerCase();
+  const statusLabel = String(definition?.defaultStatusLabel || "").toLowerCase();
+
+  if (availability === "available" || statusLabel === "available") {
+    return "available";
+  }
+
+  if (availability === "planned" || statusLabel === "planned") {
+    return "planned";
+  }
+
+  if (availability === "blocked" || statusLabel.includes("blocked")) {
+    return "blocked";
+  }
+
+  return "unknown";
 }
 
 function updateRunButton() {

@@ -1001,17 +1001,41 @@ function getLabCheckDefinitions(categories) {
 
 function createLabCheckListItem(definition) {
   const item = document.createElement("li");
+  const header = document.createElement("div");
   const title = document.createElement("strong");
   const description = document.createElement("span");
-  const status = document.createElement("span");
+  const badge = document.createElement("span");
 
-  item.className = "lab-check-item";
+  item.className = "check-card";
+  header.className = "check-card-header";
+  title.className = "check-title";
   title.textContent = definition.label || definition.category || "Unknown Lab Check";
+  badge.className = `check-badge ${getCheckBadgeClass(definition)}`;
+  badge.textContent = definition.defaultStatusLabel || definition.availability || "Unknown";
   description.textContent = definition.shortDescription || "No description available.";
-  status.textContent = definition.defaultStatusLabel || definition.availability || "Unknown";
-  item.append(title, description, status);
+  header.append(title, badge);
+  item.append(header, description);
 
   return item;
+}
+
+function getCheckBadgeClass(definition) {
+  const availability = String(definition?.availability || "").toLowerCase();
+  const statusLabel = String(definition?.defaultStatusLabel || "").toLowerCase();
+
+  if (availability === "available" || statusLabel === "available") {
+    return "available";
+  }
+
+  if (availability === "planned" || statusLabel === "planned") {
+    return "planned";
+  }
+
+  if (availability === "blocked" || statusLabel.includes("blocked")) {
+    return "blocked";
+  }
+
+  return "unknown";
 }
 
 async function getLabCheckRegistry() {

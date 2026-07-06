@@ -25,6 +25,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Refined UI around Website Check and Lab Mode.
 - Improved product language for website owners and pentesters.
 - Refreshed README to reflect Website Check and Lab Mode product positioning.
+- Improved Lab Mode check cards with availability badges.
 
 ## v0.0.1 - Prototype Foundation
 
