@@ -45,10 +45,13 @@ let findingsSection = null;
 let findingsList = null;
 let humanSummarySection = null;
 let humanSummaryDetails = null;
+let websiteTechnicalDetails = null;
+let websiteTechnicalContent = null;
 let reportSection = null;
 let reportStatus = null;
 let labSection = null;
 let labDetails = null;
+let labTechnicalDetails = null;
 let labReportStatus = null;
 let labRunButton = null;
 let labExecutionResultBlock = null;
@@ -64,6 +67,7 @@ let labEmptyFieldsPlannerLoadPromise = null;
 let labExecutionConfirmationLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  organizeWebsiteTechnicalDetails();
   runPageCheck().catch((error) => {
     renderError(error);
   });
@@ -292,10 +296,12 @@ function renderHeaderItems(items) {
 function renderHumanSummary(analysis) {
   ensureHumanSummarySection();
   fillHumanSummary({
-    mainResult: "Preparing plain-language summary...",
-    riskLevel: "unknown",
-    topRecommendation: "Review the findings once analysis finishes.",
-    safetyNote: "LoginGuard performs passive local analysis only.",
+    result: "Checking the current page...",
+    risk: "unknown",
+    mainIssue: "Preparing Website Check summary.",
+    whatItMeans: "LoginGuard is reviewing browser-visible login page signals.",
+    whatToFix: "Review the result once analysis finishes.",
+    safeCheck: "Passive local check only.",
   });
 
   getReportBuilder()
@@ -305,14 +311,16 @@ function renderHumanSummary(analysis) {
       }
 
       const report = reportBuilder.buildJsonReport(analysis);
-      fillHumanSummary(report.plainLanguageSummary || {});
+      fillHumanSummary(report.websiteCheckSummary || {});
     })
     .catch((error) => {
       fillHumanSummary({
-        mainResult: "Plain-language summary is unavailable.",
-        riskLevel: analysis?.risk?.level || "unknown",
-        topRecommendation: "Review the technical findings below.",
-        safetyNote: `Summary could not be built: ${error.message}`,
+        result: "Website Check summary is unavailable.",
+        risk: analysis?.risk?.level || "unknown",
+        mainIssue: "Summary could not be built.",
+        whatItMeans: "The technical scan result may still be available below.",
+        whatToFix: "Review the technical details manually.",
+        safeCheck: `Passive check only. Error: ${error.message}`,
       });
     });
 }
@@ -330,12 +338,16 @@ function ensureHumanSummarySection() {
   section.className = "panel human-summary-panel";
   section.setAttribute("aria-labelledby", "human-summary-heading");
   heading.id = "human-summary-heading";
-  heading.textContent = "Plain Language Summary";
+  heading.textContent = "Website Check";
   details.className = "human-summary-list";
 
   section.append(heading, details);
 
-  if (findingsSection) {
+  const urlPanel = document.querySelector(".url-panel");
+
+  if (urlPanel?.parentNode === shell) {
+    urlPanel.after(section);
+  } else if (findingsSection) {
     shell.insertBefore(section, findingsSection);
   } else if (reportSection) {
     shell.insertBefore(section, reportSection);
@@ -353,10 +365,12 @@ function fillHumanSummary(summary) {
   }
 
   humanSummaryDetails.replaceChildren(
-    createHumanSummaryRow("Main result", summary.mainResult || summary.whatWasFound || "No summary available."),
-    createHumanSummaryRow("Risk level", summary.riskLevel || "unknown"),
-    createHumanSummaryRow("Top recommendation", summary.topRecommendation || summary.whatToFixFirst || "Review the findings below."),
-    createHumanSummaryRow("Safety note", summary.safetyNote || summary.whatWasNotDone || "No forms were submitted and no credentials were collected."),
+    createHumanSummaryRow("Result", summary.result || summary.mainResult || summary.whatWasFound || "No summary available."),
+    createHumanSummaryRow("Risk", summary.risk || summary.riskLevel || "unknown"),
+    createHumanSummaryRow("Main issue", summary.mainIssue || "No main issue was selected."),
+    createHumanSummaryRow("What it means", summary.whatItMeans || summary.whyItMatters || "Review the technical details for context."),
+    createHumanSummaryRow("What to fix", summary.whatToFix || summary.topRecommendation || summary.whatToFixFirst || "Review the findings below."),
+    createHumanSummaryRow("Safe check", summary.safeCheck || summary.safetyNote || summary.whatWasNotDone || "No forms were submitted and no credentials were collected."),
   );
 }
 
@@ -383,6 +397,35 @@ function hideHumanSummary() {
   humanSummaryDetails = null;
 }
 
+function organizeWebsiteTechnicalDetails() {
+  if (websiteTechnicalDetails && websiteTechnicalContent) {
+    return;
+  }
+
+  const shell = document.querySelector(".popup-shell");
+  const summaryGrid = document.querySelector(".summary");
+  const reasonsPanel = elements.summaryList.closest(".panel");
+  const headersPanel = elements.headersList.closest(".panel");
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  const content = document.createElement("div");
+
+  details.className = "panel technical-details";
+  summary.textContent = "Technical details";
+  content.className = "technical-details-content";
+  details.append(summary, content);
+
+  [summaryGrid, reasonsPanel, headersPanel].forEach((node) => {
+    if (node) {
+      content.append(node);
+    }
+  });
+
+  shell.append(details);
+  websiteTechnicalDetails = details;
+  websiteTechnicalContent = content;
+}
+
 function renderFindings(findings) {
   if (!Array.isArray(findings) || findings.length === 0) {
     hideFindings();
@@ -401,7 +444,7 @@ function ensureFindingsSection() {
     return;
   }
 
-  const shell = document.querySelector(".popup-shell");
+  const shell = websiteTechnicalContent || document.querySelector(".popup-shell");
   const section = document.createElement("section");
   const heading = document.createElement("h2");
   const list = document.createElement("div");
@@ -409,15 +452,11 @@ function ensureFindingsSection() {
   section.className = "panel findings-panel";
   section.setAttribute("aria-labelledby", "findings-heading");
   heading.id = "findings-heading";
-  heading.textContent = "Findings";
+  heading.textContent = "Technical findings";
   list.className = "findings-list";
 
   section.append(heading, list);
-  if (reportSection) {
-    shell.insertBefore(section, reportSection);
-  } else {
-    shell.append(section);
-  }
+  shell.append(section);
 
   findingsSection = section;
   findingsList = list;
@@ -718,6 +757,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
     createLabDetailRow("Detected forms", String(Array.isArray(labPlan.detectedForms) ? labPlan.detectedForms.length : 0)),
     createLabDetailRow("Detected inputs", String(Array.isArray(labPlan.detectedInputs) ? labPlan.detectedInputs.length : 0)),
   ];
+  const availableChecksBlock = createLabCheckListBlock("Available checks", getFriendlyLabCheckNames(plannedCategories), "No lab checks are available for this page.");
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
@@ -730,7 +770,12 @@ function renderLabModePreview(labPlan, executionReadiness) {
   safetyNote.textContent = labPlan.safetyNote || "Lab Mode preview did not execute tests.";
 
   labSection.dataset.state = labPlan.allowed ? "allowed" : "refused";
-  labDetails.replaceChildren(...items, categoriesBlock, safetyNote, readinessBlock, baselineBlock, emptyFieldsBlock, confirmationBlock, executionResultBlock);
+  labDetails.replaceChildren(
+    ...items,
+    availableChecksBlock,
+    safetyNote,
+    createLabTechnicalDetailsBlock(categoriesBlock, readinessBlock, baselineBlock, emptyFieldsBlock, confirmationBlock, executionResultBlock),
+  );
   updateBaselineRunButton();
   setLabReportStatus("", "");
 }
@@ -747,13 +792,14 @@ function ensureLabModeSection() {
   const actions = document.createElement("div");
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
+  const labSessionButton = document.createElement("button");
   const runButton = document.createElement("button");
   const status = document.createElement("p");
 
   section.className = "panel lab-panel";
   section.setAttribute("aria-labelledby", "lab-heading");
   heading.id = "lab-heading";
-  heading.textContent = "Lab Mode Preview";
+  heading.textContent = "Lab Mode";
   details.className = "lab-details";
   actions.className = "lab-report-actions";
   jsonButton.type = "button";
@@ -762,6 +808,9 @@ function ensureLabModeSection() {
   markdownButton.type = "button";
   markdownButton.className = "report-button";
   markdownButton.textContent = "Copy Lab Markdown Report";
+  labSessionButton.type = "button";
+  labSessionButton.className = "report-button";
+  labSessionButton.textContent = "Open Lab Session";
   runButton.type = "button";
   runButton.className = "report-button lab-run-button is-hidden";
   runButton.textContent = "Run Baseline Observation";
@@ -771,9 +820,10 @@ function ensureLabModeSection() {
 
   jsonButton.addEventListener("click", copyCurrentLabJsonReport);
   markdownButton.addEventListener("click", copyCurrentLabMarkdownReport);
+  labSessionButton.addEventListener("click", openLabSessionPage);
   runButton.addEventListener("click", runCurrentBaselineObservation);
 
-  actions.append(jsonButton, markdownButton, runButton);
+  actions.append(runButton, jsonButton, markdownButton, labSessionButton);
   section.append(heading, details, actions, status);
   shell.append(section);
 
@@ -874,6 +924,36 @@ function createLabDetailRow(label, value) {
 
 function createLabCategoriesBlock(categories) {
   return createLabCategoryListBlock("Planned categories", categories, "No planned categories for this page.");
+}
+
+function createLabCheckListBlock(labelText, checks, emptyText) {
+  return createLabCategoryListBlock(labelText, checks, emptyText);
+}
+
+function createLabTechnicalDetailsBlock(...children) {
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  const content = document.createElement("div");
+
+  details.className = "lab-technical-details";
+  summary.textContent = "Lab technical details";
+  content.className = "lab-technical-content";
+  content.replaceChildren(...children);
+  details.append(summary, content);
+  labTechnicalDetails = details;
+
+  return details;
+}
+
+function getFriendlyLabCheckNames(categories) {
+  const labels = {
+    "baseline-submit-observation": "Baseline observation",
+    "empty-fields-observation": "Empty fields observation",
+    "response-message-comparison": "Response message comparison",
+    "invalid-synthetic-credentials-observation": "Synthetic credential observation",
+  };
+
+  return categories.map((category) => labels[category] || category);
 }
 
 function createExecutionReadinessBlock(readiness) {
@@ -1315,6 +1395,7 @@ function hideLabModePreview() {
   labSection.remove();
   labSection = null;
   labDetails = null;
+  labTechnicalDetails = null;
   labReportStatus = null;
   labRunButton = null;
   labExecutionResultBlock = null;

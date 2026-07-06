@@ -21,6 +21,8 @@ This project uses a simple changelog format for early prototype milestones. Logi
 
 - Fixed Lab Session opening so it uses a persistent normal extension tab.
 - Refined Lab Mode report safety note wording for metadata-only baseline observation results.
+- Refined UI around Website Check and Lab Mode.
+- Improved product language for website owners and pentesters.
 
 ## v0.0.1 - Prototype Foundation
 

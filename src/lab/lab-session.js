@@ -55,6 +55,7 @@ let emptyFieldsPlannerLoadPromise = null;
 let confirmationLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  organizeLabSessionLayout();
   elements.refreshButton.addEventListener("click", refreshSession);
   elements.runButton.addEventListener("click", runBaselineObservation);
   elements.copyJsonButton.addEventListener("click", copyLabJsonReport);
@@ -170,7 +171,7 @@ function renderSession() {
     ["Blocked categories", joinList(executionReadiness?.blockedCategories)],
   ]);
 
-  renderList(elements.plannedCategories, getPlannedCategories(labPlan), "No planned categories for this target.");
+  renderList(elements.plannedCategories, getFriendlyLabCheckNames(getPlannedCategories(labPlan)), "No lab checks are available for this target.");
 
   renderDetails(elements.baselinePlan, [
     ["Status", baselineObservationPlan?.status || "skipped"],
@@ -214,20 +215,67 @@ function buildPlainLabSessionSummary() {
   const inputCount = Array.isArray(labPlan?.detectedInputs) ? labPlan.detectedInputs.length : 0;
   const baselineWasRun = baselineExecutionResult?.status === "executed";
   const allowedText = labPlan?.allowed
-    ? "Lab Mode created a preview for this approved local lab page."
+    ? "Lab Mode is available for this approved local lab page."
     : "Lab Mode is refused or no supported local lab page is selected.";
   const readinessText = executionReadiness?.allowed
-    ? "Execution readiness allows approved planning categories."
-    : "Execution readiness is refused or unavailable.";
+    ? "Approved lab checks are available."
+    : "Lab checks are currently refused or unavailable.";
   const observationText = baselineWasRun
-    ? "A metadata-only baseline observation has been recorded."
+    ? "A safe baseline observation has been recorded."
     : "No baseline observation has been run yet.";
 
   return {
     whatHappened: `${allowedText} ${readinessText} ${observationText}`,
     whatWasSafe: "LoginGuard did not submit forms, trigger clicks, read input values, collect credentials, run payloads, or navigate the page.",
-    whatToLookAt: `Review the ${formCount} detected form(s), ${inputCount} detected input metadata item(s), readiness status, and any baseline observation result before copying a report.`,
+    whatToLookAt: `Review the ${formCount} detected form(s), ${inputCount} detected input metadata item(s), available checks, and any baseline observation result before copying a report.`,
   };
+}
+
+function organizeLabSessionLayout() {
+  const subtitle = document.querySelector(".subtitle");
+  const overviewPanel = elements.plainLabSummary.closest(".panel");
+  const checksPanel = elements.plannedCategories.closest(".panel");
+  const resultPanel = elements.executionResult.closest(".panel");
+  const actionsPanel = elements.copyJsonButton.closest(".panel");
+  const technicalPanels = [
+    document.querySelector(".grid"),
+    elements.baselinePlan.closest(".panel"),
+    elements.emptyFieldsPlan.closest(".panel"),
+    elements.confirmationSummary.closest(".panel"),
+  ].filter(Boolean);
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  const content = document.createElement("div");
+
+  if (subtitle) {
+    subtitle.textContent = "Persistent workspace for authorized lab checks";
+  }
+
+  setPanelHeading(overviewPanel, "Lab overview");
+  setPanelHeading(checksPanel, "Available lab checks");
+  setPanelHeading(resultPanel, "Latest result");
+  setPanelHeading(actionsPanel, "Reports");
+
+  details.className = "panel technical-details";
+  summary.textContent = "Technical details";
+  content.className = "technical-details-content";
+  details.append(summary, content);
+  technicalPanels.forEach((panel) => content.append(panel));
+
+  if (overviewPanel && checksPanel && resultPanel && actionsPanel) {
+    overviewPanel.after(checksPanel);
+    checksPanel.after(resultPanel);
+    resultPanel.after(actionsPanel);
+    actionsPanel.after(details);
+  }
+}
+
+function setPanelHeading(panel, text) {
+  const heading = panel?.querySelector("h2");
+
+  if (heading) {
+    heading.textContent = text;
+  }
 }
 
 function renderDetails(container, rows) {
@@ -523,6 +571,17 @@ function getPlannedCategories(currentLabPlan) {
   return currentLabPlan.tests
     .map((test) => test?.category)
     .filter(Boolean);
+}
+
+function getFriendlyLabCheckNames(categories) {
+  const labels = {
+    "baseline-submit-observation": "Baseline observation",
+    "empty-fields-observation": "Empty fields observation",
+    "response-message-comparison": "Response message comparison",
+    "invalid-synthetic-credentials-observation": "Synthetic credential observation",
+  };
+
+  return categories.map((category) => labels[category] || category);
 }
 
 function joinList(items) {

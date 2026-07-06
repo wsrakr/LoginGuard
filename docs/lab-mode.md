@@ -1,8 +1,15 @@
 # Lab Mode
 
-Lab Mode is a future-oriented LoginGuard concept for safe local and authorized lab learning. The current implementation is **preview-only**: it creates a local test plan preview in the popup, but it does not execute the planned tests.
+Lab Mode is a future-oriented LoginGuard concept for safe local and authorized lab learning. The current implementation creates a local test plan preview and can run the approved Baseline Observation Executor v0, which records safe page/form metadata only. It does not perform full active testing.
 
 LoginGuard remains passive by default. Passive Mode is the normal extension behavior and is the core safety model for the project.
+
+The product UI is intentionally split into two modes:
+
+- **Website Check** is for website owners and developers who want a short, understandable review of the current login page. It explains the result, risk, main issue, meaning, recommended fix, and safe-check boundary.
+- **Lab Mode** is for pentesters, students, and researchers working in local or explicitly authorized lab environments. It keeps the controlled lab workflow, reports, and technical details separate from the default Website Check.
+
+Technical details remain available in both modes, but the default Website Check does not lead with Lab Mode internals or module terminology.
 
 ## Passive Mode vs Lab Mode
 
@@ -239,6 +246,7 @@ Lab reports may include safe metadata already present in the Lab Mode plan:
 - Allowed or refused status.
 - URL.
 - Reason.
+- Lab Mode Summary with lab status, what was checked, latest result, and safe-check reminder.
 - Detected form metadata.
 - Detected input metadata.
 - Planned test categories.
@@ -255,24 +263,20 @@ Lab reports do not include:
 - Storage contents.
 - Page HTML.
 
-The plain-language Lab Summary is designed for quick review and report sharing. It does not change Lab Mode behavior. It does not submit forms, execute additional tests, read input values, or prove that a page is secure.
+The Lab Mode Summary is designed for quick review and report sharing. It does not change Lab Mode behavior. It does not submit forms, execute additional tests, read input values, or prove that a page is secure.
 
 ## Persistent Lab Session Page
 
 Chrome extension popups close when focus changes, such as when a user switches back to another tab to paste a report. LoginGuard includes a persistent Lab Session page for Lab Mode work that should remain visible while the user changes focus.
 
-The popup provides an **Open Lab Session** button. It opens `src/lab/lab-session.html` as a normal Chrome extension tab with `chrome.tabs.create`, so the Lab Session remains open after the popup closes or focus changes. The page can show:
+The popup provides an **Open Lab Session** button. It opens `src/lab/lab-session.html` as a normal Chrome extension tab with `chrome.tabs.create`, so the Lab Session remains open after the popup closes or focus changes. The Lab Session acts as the persistent pentester/lab workspace and can show:
 
 - Current target URL.
-- Lab Mode status.
-- Detected form and input counts.
-- Planned test categories.
-- Execution readiness.
-- Baseline observation plan.
-- Empty fields observation plan.
-- Execution confirmation status.
-- Latest metadata-only baseline observation result, if run.
+- Lab overview.
+- Available lab checks.
+- Latest baseline observation result, if run.
 - Lab JSON and Markdown report copy actions.
+- Technical details, including execution readiness, observation plans, and confirmation status.
 
 The Lab Session page uses the same safe message flow as the popup. It does not store credentials, cookies, tokens, form values, page HTML, or storage contents. The latest metadata-only result may remain in page memory while the Lab Session tab is open.
 

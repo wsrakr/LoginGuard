@@ -233,7 +233,7 @@
       ? "The page appears to be running in a local development context."
       : "The page does not appear to be running in a local development context.";
 
-    return `${authText} It produced ${findingCount} normalized finding${findingCount === 1 ? "" : "s"}. ${contextText}`;
+    return `${authText} LoginGuard found ${findingCount} security item${findingCount === 1 ? "" : "s"} to review. ${contextText}`;
   }
 
   function buildSummaryWhyItMatters(localContext, topFinding) {

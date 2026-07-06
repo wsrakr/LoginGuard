@@ -36,6 +36,7 @@
 
     return {
       ...report,
+      labModeSummary: buildLabModeSummary(report),
       plainLanguageLabSummary: buildPlainLanguageLabSummary(report),
     };
   }
@@ -50,12 +51,12 @@
       `URL: ${toMarkdownText(report.url || "Unavailable")}`,
       `Reason: ${toMarkdownText(report.reason)}`,
       "",
-      "## Plain Language Lab Summary",
+      "## Lab Mode Summary",
       "",
-      `- What Lab Mode checked: ${toMarkdownText(report.plainLanguageLabSummary.whatLabModeChecked)}`,
-      `- What was safely observed: ${toMarkdownText(report.plainLanguageLabSummary.whatWasSafelyObserved)}`,
-      `- What was not done: ${toMarkdownText(report.plainLanguageLabSummary.whatWasNotDone)}`,
-      `- Baseline observation status: ${toMarkdownText(report.plainLanguageLabSummary.baselineObservationStatus)}`,
+      `- Lab status: ${toMarkdownText(report.labModeSummary.labStatus)}`,
+      `- What was checked: ${toMarkdownText(report.labModeSummary.whatWasChecked)}`,
+      `- Latest result: ${toMarkdownText(report.labModeSummary.latestResult)}`,
+      `- Safe check: ${toMarkdownText(report.labModeSummary.safeCheck)}`,
       "",
       "## Detected Forms",
       "",
@@ -402,6 +403,23 @@
       baselineObservationStatus: executedBaseline
         ? "Metadata-only baseline observation executed."
         : "Baseline observation has not executed; reports show the plan only.",
+    };
+  }
+
+  function buildLabModeSummary(report) {
+    const executedBaseline = report.executedTests.some((result) => (
+      result.category === "baseline-submit-observation" && result.status === "executed"
+    ));
+
+    return {
+      labStatus: report.allowed
+        ? "Allowed local or authorized lab context."
+        : "Refused. This page is not currently approved for Lab Mode.",
+      whatWasChecked: `LoginGuard reviewed the local lab plan with ${report.plannedTestCategories.length} available check(s), ${report.detectedFormCount} detected form(s), and ${report.detectedInputCount} detected input metadata item(s).`,
+      latestResult: executedBaseline
+        ? "Baseline observation has been run and recorded safe page/form metadata."
+        : "No baseline observation has been run yet.",
+      safeCheck: "Lab Mode did not submit forms, read input values, collect credentials, run payloads, or navigate the page.",
     };
   }
 

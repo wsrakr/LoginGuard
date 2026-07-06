@@ -44,9 +44,12 @@
     };
     const explainer = getFindingExplainer();
 
+    const plainLanguageSummary = explainer.buildPlainLanguageSummary(report);
+
     return {
       ...report,
-      plainLanguageSummary: explainer.buildPlainLanguageSummary(report),
+      websiteCheckSummary: buildWebsiteCheckSummary(report, plainLanguageSummary),
+      plainLanguageSummary,
       explainedFindings: report.findings.map((finding) => explainer.explainFinding(finding, report)),
     };
   }
@@ -65,6 +68,15 @@
       `Generated: ${toMarkdownText(report.generatedAt)}`,
       `URL: ${toMarkdownText(report.url)}`,
       `Origin: ${toMarkdownText(report.origin)}`,
+      "",
+      "## Website Check Summary",
+      "",
+      `- Result: ${toMarkdownText(report.websiteCheckSummary.result)}`,
+      `- Risk: ${toMarkdownText(report.websiteCheckSummary.risk)}`,
+      `- Main issue: ${toMarkdownText(report.websiteCheckSummary.mainIssue)}`,
+      `- What it means: ${toMarkdownText(report.websiteCheckSummary.whatItMeans)}`,
+      `- What to fix: ${toMarkdownText(report.websiteCheckSummary.whatToFix)}`,
+      `- Safe check: ${toMarkdownText(report.websiteCheckSummary.safeCheck)}`,
       "",
       "## Plain Language Summary",
       "",
@@ -275,8 +287,8 @@
         ? "This appears to be a local development or lab page."
         : "This appears to be a deployed or non-local page.",
       riskLevel: String(report.risk?.level || "unknown"),
-      topRecommendation: "Review the normalized findings and apply the highest-priority recommendations first.",
-      whatWasFound: `LoginGuard produced ${Array.isArray(report.findings) ? report.findings.length : 0} normalized findings from passive analysis.`,
+      topRecommendation: "Review the findings and apply the highest-priority recommendations first.",
+      whatWasFound: `LoginGuard found ${Array.isArray(report.findings) ? report.findings.length : 0} security items from passive analysis.`,
       whyItMatters: "Authentication surfaces should be reviewed carefully because users may rely on them for account access.",
       whatToFixFirst: "Start with high or medium severity findings, then review lower severity context.",
       whatWasNotDone: "LoginGuard did not submit forms, collect credentials, run payloads, or prove the page is fully secure.",
@@ -295,6 +307,38 @@
       recommendedAction: String(finding?.recommendation || "Review this finding manually."),
       technicalDetail: `Technical ID: ${String(finding?.id || "unknown")}`,
     };
+  }
+
+  function buildWebsiteCheckSummary(report, plainSummary) {
+    const findings = Array.isArray(report.findings) ? report.findings : [];
+    const explainedFindings = report.explainedFindings || findings.map((finding) => getFindingExplainer().explainFinding(finding, report));
+    const mainFinding = findMainWebsiteFinding(explainedFindings);
+    const authType = report.authentication?.type || "Unknown";
+    const result = authType === "Unknown"
+      ? "No clear login page was detected."
+      : `${authType} page detected.`;
+
+    return {
+      result,
+      risk: String(report.risk?.level || plainSummary.riskLevel || "unknown"),
+      mainIssue: mainFinding?.plainTitle || "No main issue was selected.",
+      whatItMeans: mainFinding?.plainSummary || plainSummary.whyItMatters || "LoginGuard completed a passive review of the current page.",
+      whatToFix: mainFinding?.recommendedAction || plainSummary.topRecommendation || "Review the findings and apply defensive improvements where needed.",
+      safeCheck: "Passive local check only. No forms were submitted and no credentials were collected.",
+    };
+  }
+
+  function findMainWebsiteFinding(explainedFindings) {
+    const priorityOrder = {
+      "High priority": 0,
+      "Medium priority": 1,
+      "Low priority": 2,
+      Informational: 3,
+    };
+
+    return [...explainedFindings].sort((left, right) => (
+      (priorityOrder[left.riskLabel] ?? 99) - (priorityOrder[right.riskLabel] ?? 99)
+    ))[0] || null;
   }
 
   function getReportOrigin(analysis) {
