@@ -67,10 +67,10 @@ The popup Lab Mode Preview shows:
 - Reason.
 - Detected form count.
 - Detected input count.
-- Planned test categories.
+- Available lab checks with user-friendly labels.
 - Safety note.
 
-Planned categories are descriptive labels only. They are not executed by the current implementation.
+Available lab checks are product labels for controlled lab workflow steps. Raw technical category IDs remain available in technical details and reports for developers and future automation.
 
 Example planned categories may include:
 
@@ -80,6 +80,24 @@ Example planned categories may include:
 - `response-message-comparison`
 
 These names describe future observation categories for local labs. They are not payloads and they are not attack instructions.
+
+## Lab Check Registry
+
+LoginGuard includes a Lab Mode Check Registry so the UI can show clear check names instead of raw internal category IDs.
+
+| Technical Category ID | User-Facing Label | Availability | Safety Level |
+| --- | --- | --- | --- |
+| `baseline-submit-observation` | Baseline Form Check | Available | Metadata-only |
+| `empty-fields-observation` | Empty Fields Check | Planned | Planner-only |
+| `response-message-comparison` | Response Message Check | Planned | Planner-only |
+| `invalid-synthetic-credentials-observation` | Invalid Credentials Check | Blocked for now | Blocked |
+
+The registry separates:
+
+- **User-facing labels** for the popup, Lab Session, and readable reports.
+- **Technical category IDs** for technical details, structured reports, and future module wiring.
+
+This registry is metadata only. It does not add execution behavior, payloads, network requests, form submission, or credential handling.
 
 ## Execution Guard
 
@@ -247,6 +265,7 @@ Lab reports may include approved metadata already present in the Lab Mode plan:
 - URL.
 - Reason.
 - Lab Mode Summary with lab status, what was checked, latest result, and check-completed reminder.
+- Lab check definitions with user-facing labels, descriptions, availability, safety level, and technical category IDs.
 - Detected form metadata.
 - Detected input metadata.
 - Planned test categories.

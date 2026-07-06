@@ -124,6 +124,25 @@ h2 {
   line-height: 1.4;
 }
 
+.check-item {
+  display: grid;
+  gap: 4px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 10px;
+}
+
+.check-item strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.check-item span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .technical-details {
   display: grid;
   gap: 10px;

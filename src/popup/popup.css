@@ -380,6 +380,33 @@ h2 {
   line-height: 1.35;
 }
 
+.lab-check-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lab-check-item {
+  display: grid;
+  gap: 3px;
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 8px;
+  line-height: 1.35;
+}
+
+.lab-check-item strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.lab-check-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .lab-readiness {
   display: grid;
   gap: 8px;

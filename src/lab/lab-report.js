@@ -8,6 +8,7 @@
     const detectedForms = sanitizeDetectedForms(plan.detectedForms);
     const detectedInputs = sanitizeDetectedInputs(plan.detectedInputs);
     const plannedTestCategories = getPlannedTestCategories(plan.tests);
+    const labCheckDefinitions = getLabCheckDefinitions(plannedTestCategories);
     const readiness = sanitizeExecutionReadiness(executionReadiness);
     const initialExecutionResults = buildInitialExecutionResults(readiness);
     const baselineObservationPlan = buildBaselineObservationPlan(plan, readiness);
@@ -26,6 +27,7 @@
       detectedInputs,
       detectedInputCount: detectedInputs.length,
       plannedTestCategories,
+      labCheckDefinitions,
       executionReadiness: readiness,
       initialExecutionResults,
       baselineObservationPlan,
@@ -58,9 +60,25 @@
       `- Latest result: ${toMarkdownText(report.labModeSummary.latestResult)}`,
       `- Check completed: ${toMarkdownText(report.labModeSummary.checkCompleted)}`,
       "",
-      "## Detected Forms",
+      "## Available Lab Checks",
       "",
     ];
+
+    if (report.labCheckDefinitions.length === 0) {
+      lines.push("No Lab Mode checks were available in this plan.");
+    } else {
+      report.labCheckDefinitions.forEach((check) => {
+        lines.push(`- ${toMarkdownText(check.label)} (${toMarkdownText(check.defaultStatusLabel)})`);
+        lines.push(`  - ${toMarkdownText(check.shortDescription)}`);
+        lines.push(`  - Purpose: ${toMarkdownText(check.userPurpose)}`);
+      });
+    }
+
+    lines.push(
+      "",
+      "## Detected Forms",
+      "",
+    );
 
     if (report.detectedForms.length === 0) {
       lines.push("No forms were included in this Lab Mode plan.");
@@ -223,6 +241,36 @@
     return plan.allowed
       ? "Lab Mode plan was created for an approved local lab context."
       : "Lab Mode was refused for this context.";
+  }
+
+  function getLabCheckDefinitions(categories) {
+    const registry = globalThis.LoginGuardLabCheckRegistry;
+
+    if (registry?.listCheckDefinitions) {
+      return registry.listCheckDefinitions(categories).map(sanitizeLabCheckDefinition);
+    }
+
+    return categories.map((category) => sanitizeLabCheckDefinition({
+      category,
+      label: category,
+      shortDescription: "No description available.",
+      userPurpose: "Review this lab check manually.",
+      availability: "unknown",
+      safetyLevel: "unknown",
+      defaultStatusLabel: "Unknown",
+    }));
+  }
+
+  function sanitizeLabCheckDefinition(definition) {
+    return {
+      category: String(definition?.category || ""),
+      label: String(definition?.label || definition?.category || "Unknown Lab Check"),
+      shortDescription: String(definition?.shortDescription || "No description available."),
+      userPurpose: String(definition?.userPurpose || "Review this lab check manually."),
+      availability: String(definition?.availability || "unknown"),
+      safetyLevel: String(definition?.safetyLevel || "unknown"),
+      defaultStatusLabel: String(definition?.defaultStatusLabel || "Unknown"),
+    };
   }
 
   function sanitizeExecutionReadiness(readiness) {

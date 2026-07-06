@@ -53,6 +53,7 @@ let labReportLoadPromise = null;
 let baselinePlannerLoadPromise = null;
 let emptyFieldsPlannerLoadPromise = null;
 let confirmationLoadPromise = null;
+let labCheckRegistryLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   organizeLabSessionLayout();
@@ -86,6 +87,7 @@ async function refreshSession() {
     });
 
     const labModeResult = await sendLabPlanMessage(targetTabId, targetUrl);
+    await getLabCheckRegistry().catch(() => null);
     labPlan = labModeResult.labPlan;
     executionReadiness = labModeResult.executionReadiness;
     baselineObservationPlan = await buildBaselineObservationPlan(labPlan, executionReadiness);
@@ -171,7 +173,7 @@ function renderSession() {
     ["Blocked categories", joinList(executionReadiness?.blockedCategories)],
   ]);
 
-  renderList(elements.plannedCategories, getFriendlyLabCheckNames(getPlannedCategories(labPlan)), "No lab checks are available for this target.");
+  renderLabChecks(elements.plannedCategories, getLabCheckDefinitions(getPlannedCategories(labPlan)), "No lab checks are available for this target.");
 
   renderDetails(elements.baselinePlan, [
     ["Status", baselineObservationPlan?.status || "skipped"],
@@ -303,6 +305,32 @@ function renderList(container, items, emptyText) {
       const listItem = document.createElement("li");
 
       listItem.textContent = String(item);
+
+      return listItem;
+    }),
+  );
+}
+
+function renderLabChecks(container, checks, emptyText) {
+  const checkItems = Array.isArray(checks) && checks.length > 0 ? checks : [];
+
+  if (checkItems.length === 0) {
+    renderList(container, [], emptyText);
+    return;
+  }
+
+  container.replaceChildren(
+    ...checkItems.map((check) => {
+      const listItem = document.createElement("li");
+      const title = document.createElement("strong");
+      const description = document.createElement("span");
+      const status = document.createElement("span");
+
+      listItem.className = "check-item";
+      title.textContent = check.label || check.category || "Unknown Lab Check";
+      description.textContent = check.shortDescription || "No description available.";
+      status.textContent = check.defaultStatusLabel || check.availability || "Unknown";
+      listItem.append(title, description, status);
 
       return listItem;
     }),
@@ -535,6 +563,7 @@ async function getLabReportBuilder() {
     labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js")))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-check-registry.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
@@ -550,6 +579,29 @@ async function getLabReportBuilder() {
   }
 
   return labReportLoadPromise;
+}
+
+async function getLabCheckRegistry() {
+  if (globalThis.LoginGuardLabCheckRegistry) {
+    return globalThis.LoginGuardLabCheckRegistry;
+  }
+
+  if (!labCheckRegistryLoadPromise) {
+    labCheckRegistryLoadPromise = import(chrome.runtime.getURL("src/lab/lab-check-registry.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabCheckRegistry) {
+          throw new Error("LoginGuard Lab check registry was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabCheckRegistry;
+      })
+      .catch((error) => {
+        labCheckRegistryLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labCheckRegistryLoadPromise;
 }
 
 function setStatus(element, message, state) {
@@ -582,6 +634,24 @@ function getFriendlyLabCheckNames(categories) {
   };
 
   return categories.map((category) => labels[category] || category);
+}
+
+function getLabCheckDefinitions(categories) {
+  const registry = globalThis.LoginGuardLabCheckRegistry;
+
+  if (registry?.listCheckDefinitions) {
+    return registry.listCheckDefinitions(categories);
+  }
+
+  return categories.map((category) => ({
+    category,
+    label: getFriendlyLabCheckNames([category])[0],
+    shortDescription: "No description available.",
+    userPurpose: "Review this lab check manually.",
+    availability: "unknown",
+    safetyLevel: "unknown",
+    defaultStatusLabel: "Unknown",
+  }));
 }
 
 function joinList(items) {

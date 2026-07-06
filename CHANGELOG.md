@@ -16,6 +16,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added Empty Fields Observation Planner for Lab Mode.
 - Added Human-Friendly Findings Layer.
 - Added plain-language summaries to reports and UI.
+- Added Lab Mode Check Registry for clearer lab check labels.
 
 ### Changed
 

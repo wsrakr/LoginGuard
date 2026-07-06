@@ -65,6 +65,7 @@ let labReportLoadPromise = null;
 let labBaselinePlannerLoadPromise = null;
 let labEmptyFieldsPlannerLoadPromise = null;
 let labExecutionConfirmationLoadPromise = null;
+let labCheckRegistryLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   organizeWebsiteTechnicalDetails();
@@ -95,6 +96,7 @@ async function runPageCheck() {
   const responseHeaders = await getSecurityHeaders(tab.id, tab.url);
   const analysis = await sendAnalyzeMessage(tab.id, responseHeaders);
   const labModeResult = await sendLabPlanMessage(tab.id, tab.url);
+  await getLabCheckRegistry().catch(() => null);
   renderAnalysis(analysis, labModeResult.labPlan, labModeResult.executionReadiness);
 }
 
@@ -759,7 +761,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
     createLabDetailRow("Detected forms", String(Array.isArray(labPlan.detectedForms) ? labPlan.detectedForms.length : 0)),
     createLabDetailRow("Detected inputs", String(Array.isArray(labPlan.detectedInputs) ? labPlan.detectedInputs.length : 0)),
   ];
-  const availableChecksBlock = createLabCheckListBlock("Available checks", getFriendlyLabCheckNames(plannedCategories), "No lab checks are available for this page.");
+  const availableChecksBlock = createLabCheckListBlock("Available checks", getLabCheckDefinitions(plannedCategories), "No lab checks are available for this page.");
   const categoriesBlock = createLabCategoriesBlock(plannedCategories);
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
@@ -894,6 +896,7 @@ async function getLabReportBuilder() {
     labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js")))
+      .then(() => import(chrome.runtime.getURL("src/lab/lab-check-registry.js")))
       .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
@@ -929,7 +932,27 @@ function createLabCategoriesBlock(categories) {
 }
 
 function createLabCheckListBlock(labelText, checks, emptyText) {
-  return createLabCategoryListBlock(labelText, checks, emptyText);
+  const block = document.createElement("div");
+  const label = document.createElement("p");
+  const list = document.createElement("ul");
+  const checkItems = Array.isArray(checks) && checks.length > 0 ? checks : [];
+
+  block.className = "lab-categories lab-checks";
+  label.className = "lab-categories-label";
+  label.textContent = labelText;
+  list.className = "lab-check-list";
+
+  if (checkItems.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = emptyText;
+    list.append(item);
+  } else {
+    list.replaceChildren(...checkItems.map(createLabCheckListItem));
+  }
+
+  block.append(label, list);
+
+  return block;
 }
 
 function createLabTechnicalDetailsBlock(...children) {
@@ -956,6 +979,62 @@ function getFriendlyLabCheckNames(categories) {
   };
 
   return categories.map((category) => labels[category] || category);
+}
+
+function getLabCheckDefinitions(categories) {
+  const registry = globalThis.LoginGuardLabCheckRegistry;
+
+  if (registry?.listCheckDefinitions) {
+    return registry.listCheckDefinitions(categories);
+  }
+
+  return categories.map((category) => ({
+    category,
+    label: getFriendlyLabCheckNames([category])[0],
+    shortDescription: "No description available.",
+    userPurpose: "Review this lab check manually.",
+    availability: "unknown",
+    safetyLevel: "unknown",
+    defaultStatusLabel: "Unknown",
+  }));
+}
+
+function createLabCheckListItem(definition) {
+  const item = document.createElement("li");
+  const title = document.createElement("strong");
+  const description = document.createElement("span");
+  const status = document.createElement("span");
+
+  item.className = "lab-check-item";
+  title.textContent = definition.label || definition.category || "Unknown Lab Check";
+  description.textContent = definition.shortDescription || "No description available.";
+  status.textContent = definition.defaultStatusLabel || definition.availability || "Unknown";
+  item.append(title, description, status);
+
+  return item;
+}
+
+async function getLabCheckRegistry() {
+  if (globalThis.LoginGuardLabCheckRegistry) {
+    return globalThis.LoginGuardLabCheckRegistry;
+  }
+
+  if (!labCheckRegistryLoadPromise) {
+    labCheckRegistryLoadPromise = import(chrome.runtime.getURL("src/lab/lab-check-registry.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabCheckRegistry) {
+          throw new Error("LoginGuard Lab check registry was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabCheckRegistry;
+      })
+      .catch((error) => {
+        labCheckRegistryLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labCheckRegistryLoadPromise;
 }
 
 function createExecutionReadinessBlock(readiness) {
