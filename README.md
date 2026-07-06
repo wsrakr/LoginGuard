@@ -10,6 +10,20 @@ LoginGuard is defensive, local-first, and built to turn login-page checks into c
 
 `PROJECT.md` is the source of truth for project direction, safety boundaries, architecture decisions, and future development.
 
+## Preview
+
+### Website Check
+
+LoginGuard shows a short readiness summary for website owners and developers.
+
+![LoginGuard Website Check](docs/images/website-check.png)
+
+### Lab Session
+
+Lab Session provides a persistent workspace for authorized lab checks and reports.
+
+![LoginGuard Lab Session](docs/images/lab-session.png)
+
 ## Who is LoginGuard for?
 
 - Website owners who want a simple login-page readiness check.
