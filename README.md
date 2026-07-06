@@ -4,7 +4,7 @@
 
 Chrome can tell you whether a connection is secure. LoginGuard focuses on what the browser lock icon does not explain: whether a login page has common readiness issues, what should be fixed, and how authorized lab checks can be reported.
 
-LoginGuard is defensive, local-first, and built around clear reporting. It does not prove that a site is fully secure, and it is not a replacement for Chrome security warnings or a professional penetration test.
+LoginGuard is defensive, local-first, and built to turn login-page checks into clear, actionable reports. It does not prove that a site is fully secure, and it is not a replacement for Chrome security warnings or a professional penetration test.
 
 > Analyze. Explain. Improve. Never Attack.
 
@@ -15,7 +15,7 @@ LoginGuard is defensive, local-first, and built around clear reporting. It does 
 - Website owners who want a simple login-page readiness check.
 - Developers reviewing authentication pages before production.
 - Students learning authentication security concepts in safe environments.
-- Pentesters working in authorized local or lab environments.
+- Pentesters working in authorized local, lab, or training environments.
 
 ## Product Modes
 
