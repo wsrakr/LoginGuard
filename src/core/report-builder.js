@@ -72,11 +72,12 @@
       "## Website Check Summary",
       "",
       `- Result: ${toMarkdownText(report.websiteCheckSummary.result)}`,
-      `- Risk: ${toMarkdownText(report.websiteCheckSummary.risk)}`,
+      `- Production readiness: ${toMarkdownText(report.websiteCheckSummary.readiness)}`,
+      `- Priority: ${toMarkdownText(report.websiteCheckSummary.priority)}`,
       `- Main issue: ${toMarkdownText(report.websiteCheckSummary.mainIssue)}`,
       `- What it means: ${toMarkdownText(report.websiteCheckSummary.whatItMeans)}`,
       `- What to fix: ${toMarkdownText(report.websiteCheckSummary.whatToFix)}`,
-      `- Safe check: ${toMarkdownText(report.websiteCheckSummary.safeCheck)}`,
+      `- Check completed: ${toMarkdownText(report.websiteCheckSummary.checkCompleted)}`,
       "",
       "## Plain Language Summary",
       "",
@@ -114,7 +115,7 @@
       `- Email fields: ${fields.email}`,
       `- Username/email fields: ${fields.usernameOrEmail}`,
       "",
-      "## Risk",
+      "## Technical Risk Data",
       "",
       `- Level: ${toMarkdownText(risk.level || "unknown")}`,
     );
@@ -158,7 +159,7 @@
       "Safety rules:",
       "- Do not provide exploit steps.",
       "- Do not suggest unauthorized testing.",
-      "- Do not claim the page is fully secure.",
+      "- Do not claim the page is production-ready or fully secure.",
       "- Do not provide payloads, bypass instructions, brute-force workflows, or credential collection guidance.",
       "- Focus on defensive remediation and reporting.",
       "- Treat local development context as different from a deployed production authentication page.",
@@ -175,7 +176,7 @@
       "Output guidance:",
       "- Use concise headings and bullets.",
       "- Separate business impact from developer implementation details.",
-      "- Prioritize work by severity, confidence, and deployment context.",
+      "- Prioritize work by severity, confidence, production-readiness impact, and deployment context.",
       "- Call out local development context when it changes interpretation.",
       "- Keep remediation suggestions defensive and reviewable.",
       "",
@@ -201,7 +202,7 @@
       ? "Use these findings as local development guidance before reviewing a deployed authentication surface."
       : "Use these findings as defensive review guidance for the currently opened page; they do not prove whether the page is secure.";
 
-    return `LoginGuard classified this page as ${authType} with an overall risk level of ${riskLevel}. ${localContextText} ${interpretation}`;
+    return `LoginGuard classified this page as ${authType} with an overall production-readiness priority of ${riskLevel}. ${localContextText} ${interpretation}`;
   }
 
   function groupFindingsByCategory(findings) {
@@ -248,7 +249,7 @@
       "",
       `- Plain summary: ${toMarkdownText(explainedFinding.plainSummary)}`,
       `- Why it matters: ${toMarkdownText(explainedFinding.whyItMatters)}`,
-      `- Risk label: ${toMarkdownText(explainedFinding.riskLabel)}`,
+      `- Priority label: ${toMarkdownText(explainedFinding.riskLabel)}`,
       `- Severity: ${toMarkdownText(finding.severity)}`,
       `- Status: ${toMarkdownText(finding.status)}`,
       `- Confidence: ${toFiniteNumber(finding.confidence)}%`,
@@ -290,8 +291,8 @@
       topRecommendation: "Review the findings and apply the highest-priority recommendations first.",
       whatWasFound: `LoginGuard found ${Array.isArray(report.findings) ? report.findings.length : 0} security items from passive analysis.`,
       whyItMatters: "Authentication surfaces should be reviewed carefully because users may rely on them for account access.",
-      whatToFixFirst: "Start with high or medium severity findings, then review lower severity context.",
-      whatWasNotDone: "LoginGuard did not submit forms, collect credentials, run payloads, or prove the page is fully secure.",
+      whatToFixFirst: "Start with high or medium priority findings, then review lower priority context.",
+      whatWasNotDone: "LoginGuard did not submit forms, read passwords, change values, collect credentials, or run payloads.",
       safetyNote: report.safetyNote || SAFETY_NOTE,
     };
   }
@@ -303,7 +304,7 @@
       plainTitle: String(finding?.title || "Security finding"),
       plainSummary: String(finding?.summary || "LoginGuard found an item that should be reviewed."),
       whyItMatters: "This finding adds context for a defensive review of the current page.",
-      riskLabel: String(finding?.severity || "info"),
+      riskLabel: toPriorityLabel(finding?.severity),
       recommendedAction: String(finding?.recommendation || "Review this finding manually."),
       technicalDetail: `Technical ID: ${String(finding?.id || "unknown")}`,
     };
@@ -320,25 +321,64 @@
 
     return {
       result,
+      readiness: buildReadinessLabel(report, plainSummary),
+      priority: toPriorityLabel(report.risk?.level || plainSummary.riskLevel),
       risk: String(report.risk?.level || plainSummary.riskLevel || "unknown"),
       mainIssue: mainFinding?.plainTitle || "No main issue was selected.",
       whatItMeans: mainFinding?.plainSummary || plainSummary.whyItMatters || "LoginGuard completed a passive review of the current page.",
       whatToFix: mainFinding?.recommendedAction || plainSummary.topRecommendation || "Review the findings and apply defensive improvements where needed.",
-      safeCheck: "Passive local check only. No forms were submitted and no credentials were collected.",
+      checkCompleted: "Passive local check completed. No forms were submitted, no passwords were read, and no values were changed.",
+      safeCheck: "Passive local check completed. No forms were submitted, no passwords were read, and no values were changed.",
     };
   }
 
   function findMainWebsiteFinding(explainedFindings) {
     const priorityOrder = {
-      "High priority": 0,
-      "Medium priority": 1,
-      "Low priority": 2,
+      "High priority issue": 0,
+      "Medium priority issue": 1,
+      "Low priority item": 2,
       Informational: 3,
     };
 
     return [...explainedFindings].sort((left, right) => (
       (priorityOrder[left.riskLabel] ?? 99) - (priorityOrder[right.riskLabel] ?? 99)
     ))[0] || null;
+  }
+
+  function buildReadinessLabel(report, plainSummary) {
+    const priority = String(report.risk?.level || plainSummary.riskLevel || "unknown").toLowerCase();
+
+    if (priority === "high") {
+      return "Needs work before production.";
+    }
+
+    if (priority === "medium") {
+      return "Needs attention before production.";
+    }
+
+    if (priority === "low" || priority === "info") {
+      return "Check completed; review noted items before production.";
+    }
+
+    return "Check completed; readiness is unknown.";
+  }
+
+  function toPriorityLabel(value) {
+    const normalized = String(value || "").toLowerCase();
+
+    if (normalized === "high") {
+      return "High priority issue";
+    }
+
+    if (normalized === "medium") {
+      return "Medium priority issue";
+    }
+
+    if (normalized === "low") {
+      return "Low priority item";
+    }
+
+    return normalized === "info" ? "Informational" : "Unknown priority";
   }
 
   function getReportOrigin(analysis) {

@@ -1,7 +1,7 @@
 // Lab Mode empty-fields observation planner. This creates metadata only and never executes tests.
 (() => {
   const CATEGORY = "empty-fields-observation";
-  const SAFETY_NOTE = "Empty fields observation planning only records safe metadata. It does not submit forms, read input values, clear fields, modify inputs, or execute tests.";
+  const SAFETY_NOTE = "Empty fields observation planning only records approved metadata. It does not submit forms, read input values, clear fields, modify inputs, change values, or execute tests.";
   const OBSERVATIONS_PLANNED = [
     "current-url-before-empty-fields-observation",
     "target-form-count",

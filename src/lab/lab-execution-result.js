@@ -1,6 +1,6 @@
 // Lab Mode execution result helpers for future local-only execution reporting.
 (() => {
-  const SAFETY_NOTE = "Lab Mode execution result helpers create report records only. Executed status is reserved for approved safe metadata observation results.";
+  const SAFETY_NOTE = "Lab Mode execution result helpers create report records only. Executed status is reserved for approved metadata observation results.";
   const RESULT_STATUSES = new Set(["planned", "blocked", "skipped", "error", "executed"]);
 
   function createPlannedResult(category, reason) {
@@ -22,7 +22,7 @@
   function createExecutedResult(category, reason, observations = []) {
     const startedAt = new Date().toISOString();
     const finishedAt = new Date().toISOString();
-    const result = createResult("executed", category, reason || "This category recorded safe metadata observations.");
+    const result = createResult("executed", category, reason || "This category recorded approved metadata observations.");
 
     return {
       ...result,

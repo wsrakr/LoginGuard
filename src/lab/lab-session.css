@@ -6,8 +6,8 @@
   --text: #172033;
   --muted: #627089;
   --border: #d7deea;
-  --ok: #0f8a5f;
-  --danger: #b42318;
+  --ready: #0f8a5f;
+  --priority: #b42318;
   --shadow: 0 10px 26px rgba(29, 41, 57, 0.1);
 }
 
@@ -166,7 +166,7 @@ h2 {
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--ok);
+  outline: 2px solid var(--ready);
   outline-offset: 2px;
 }
 
@@ -175,11 +175,11 @@ h2 {
 }
 
 .status-text[data-state="success"] {
-  color: var(--ok);
+  color: var(--ready);
 }
 
 .status-text[data-state="error"] {
-  color: var(--danger);
+  color: var(--priority);
 }
 
 @media (max-width: 760px) {

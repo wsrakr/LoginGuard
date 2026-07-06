@@ -153,7 +153,7 @@ function renderSession() {
 
   renderDetails(elements.plainLabSummary, [
     ["What happened?", plainSummary.whatHappened],
-    ["What was safe?", plainSummary.whatWasSafe],
+    ["Check completed", plainSummary.checkCompleted],
     ["What should I look at?", plainSummary.whatToLookAt],
   ]);
 
@@ -221,12 +221,12 @@ function buildPlainLabSessionSummary() {
     ? "Approved lab checks are available."
     : "Lab checks are currently refused or unavailable.";
   const observationText = baselineWasRun
-    ? "A safe baseline observation has been recorded."
+    ? "A baseline observation has been completed."
     : "No baseline observation has been run yet.";
 
   return {
     whatHappened: `${allowedText} ${readinessText} ${observationText}`,
-    whatWasSafe: "LoginGuard did not submit forms, trigger clicks, read input values, collect credentials, run payloads, or navigate the page.",
+    checkCompleted: "LoginGuard did not submit forms, trigger clicks, read input values, change values, collect credentials, run payloads, or navigate the page.",
     whatToLookAt: `Review the ${formCount} detected form(s), ${inputCount} detected input metadata item(s), available checks, and any baseline observation result before copying a report.`,
   };
 }
@@ -336,7 +336,7 @@ async function runBaselineObservation() {
     baselineExecutionResult = result;
     executionConfirmation = await buildExecutionConfirmation(labPlan, executionReadiness, baselineObservationPlan, true);
     renderSession();
-    setStatus(elements.actionStatus, "Baseline observation recorded safe metadata locally.", "success");
+    setStatus(elements.actionStatus, "Baseline observation completed with approved metadata only.", "success");
   } catch (error) {
     setStatus(elements.actionStatus, `Could not run baseline observation: ${error.message}`, "error");
   }

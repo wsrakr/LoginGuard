@@ -1,7 +1,7 @@
-// Lab Mode baseline observation executor v0. Records safe metadata only; never submits forms.
+// Lab Mode baseline observation executor v0. Records approved metadata only; never submits forms.
 (() => {
   const CATEGORY = "baseline-submit-observation";
-  const SAFETY_NOTE = "Baseline Observation Executor v0 records safe metadata only. It does not submit forms, trigger events, create inputs, or read input values.";
+  const SAFETY_NOTE = "Baseline Observation Executor v0 records approved metadata only. It does not submit forms, trigger events, create inputs, read input values, or change values.";
 
   function runBaselineObservation({
     document: rootDocument,
@@ -48,7 +48,7 @@
       startedAt,
       finishedAt,
       observations,
-      reason: "Baseline observation completed with safe metadata only.",
+      reason: "Baseline observation completed with approved metadata only.",
       safetyNote: SAFETY_NOTE,
     };
   }
@@ -102,7 +102,7 @@
     return {
       name,
       data,
-      safetyNote: "Observation contains safe metadata only and no input values.",
+      safetyNote: "Observation contains approved metadata only. No input values were read.",
     };
   }
 

@@ -56,7 +56,7 @@
       `- Lab status: ${toMarkdownText(report.labModeSummary.labStatus)}`,
       `- What was checked: ${toMarkdownText(report.labModeSummary.whatWasChecked)}`,
       `- Latest result: ${toMarkdownText(report.labModeSummary.latestResult)}`,
-      `- Safe check: ${toMarkdownText(report.labModeSummary.safeCheck)}`,
+      `- Check completed: ${toMarkdownText(report.labModeSummary.checkCompleted)}`,
       "",
       "## Detected Forms",
       "",
@@ -393,13 +393,14 @@
       ? "Execution readiness passed for approved planning categories."
       : "Execution readiness did not allow execution.";
     const observedText = executedBaseline
-      ? `A metadata-only baseline observation was recorded with ${countObservationItems(report.executedTests)} safe observation item(s).`
+      ? `A baseline observation was recorded with ${countObservationItems(report.executedTests)} approved metadata item(s).`
       : "No metadata-only baseline observation has been run yet.";
 
     return {
       whatLabModeChecked: `${statusText} ${readinessText}`,
+      whatWasChecked: `${observedText} The report includes ${report.detectedFormCount} detected form(s) and ${report.detectedInputCount} detected input metadata item(s).`,
       whatWasSafelyObserved: `${observedText} The report includes ${report.detectedFormCount} detected form(s) and ${report.detectedInputCount} detected input metadata item(s).`,
-      whatWasNotDone: "Lab Mode did not submit forms, run payloads, read input values, collect credentials, or prove the page is secure.",
+      whatWasNotDone: "Lab Mode did not submit forms, run payloads, read input values, change values, or collect credentials.",
       baselineObservationStatus: executedBaseline
         ? "Metadata-only baseline observation executed."
         : "Baseline observation has not executed; reports show the plan only.",
@@ -417,9 +418,9 @@
         : "Refused. This page is not currently approved for Lab Mode.",
       whatWasChecked: `LoginGuard reviewed the local lab plan with ${report.plannedTestCategories.length} available check(s), ${report.detectedFormCount} detected form(s), and ${report.detectedInputCount} detected input metadata item(s).`,
       latestResult: executedBaseline
-        ? "Baseline observation has been run and recorded safe page/form metadata."
+        ? "Baseline observation has been completed and recorded approved page/form metadata."
         : "No baseline observation has been run yet.",
-      safeCheck: "Lab Mode did not submit forms, read input values, collect credentials, run payloads, or navigate the page.",
+      checkCompleted: "Lab Mode did not submit forms, read input values, change values, collect credentials, run payloads, or navigate the page.",
     };
   }
 

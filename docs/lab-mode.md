@@ -1,12 +1,12 @@
 # Lab Mode
 
-Lab Mode is a future-oriented LoginGuard concept for safe local and authorized lab learning. The current implementation creates a local test plan preview and can run the approved Baseline Observation Executor v0, which records safe page/form metadata only. It does not perform full active testing.
+Lab Mode is a future-oriented LoginGuard concept for local and authorized lab learning. The current implementation creates a local test plan preview and can run the approved Baseline Observation Executor v0, which records approved page/form metadata only. It does not perform full active testing.
 
 LoginGuard remains passive by default. Passive Mode is the normal extension behavior and is the core safety model for the project.
 
 The product UI is intentionally split into two modes:
 
-- **Website Check** is for website owners and developers who want a short, understandable review of the current login page. It explains the result, risk, main issue, meaning, recommended fix, and safe-check boundary.
+- **Website Check** is for website owners and developers who want a short, understandable review of the current login page. It explains production readiness, missing controls, the main issue, and what should be fixed first.
 - **Lab Mode** is for pentesters, students, and researchers working in local or explicitly authorized lab environments. It keeps the controlled lab workflow, reports, and technical details separate from the default Website Check.
 
 Technical details remain available in both modes, but the default Website Check does not lead with Lab Mode internals or module terminology.
@@ -16,13 +16,13 @@ Technical details remain available in both modes, but the default Website Check 
 | Mode | Purpose | Current Behavior |
 | --- | --- | --- |
 | Passive Mode | Inspect the current page locally and explain browser-visible authentication and security signals. | Runs passive DOM and URL analysis. It does not submit forms, collect credentials, or run payloads. |
-| Lab Mode Preview | Show whether a page is an approved local lab context and describe possible future lab test categories. | Creates a safe local test plan preview only. It does not submit forms or execute tests. |
+| Lab Mode Preview | Show whether a page is an approved local lab context and describe possible future lab test categories. | Creates a local test plan preview only. It does not submit forms or execute tests. |
 
 Passive Mode is the default. Lab Mode must remain separate from Passive Mode in implementation, UI, documentation, and safety controls.
 
 ## Current Scope
 
-Current Lab Mode only checks whether the active page is an approved local lab context and builds a preview object from safe page metadata.
+Current Lab Mode only checks whether the active page is an approved local lab context and builds a preview object from approved page metadata.
 
 It is intended for:
 
@@ -83,7 +83,7 @@ These names describe future observation categories for local labs. They are not 
 
 ## Execution Guard
 
-LoginGuard includes a Lab Mode execution guard as a future-safety layer. The guard evaluates whether a Lab Mode plan would be eligible for future controlled execution, but it does not execute tests.
+LoginGuard includes a Lab Mode execution guard as a control layer. The guard evaluates whether a Lab Mode plan would be eligible for future controlled execution, but it does not execute tests.
 
 The guard refuses execution readiness when:
 
@@ -94,7 +94,7 @@ The guard refuses execution readiness when:
 - No planned test categories are available.
 - A category is not currently approved for future execution.
 
-For now, only these future-safe categories may pass readiness:
+For now, only these approved categories may pass readiness:
 
 - `baseline-submit-observation`
 - `empty-fields-observation`
@@ -119,7 +119,7 @@ Execution result records do not include input values, credentials, cookies, toke
 
 ## Baseline Observation Planning
 
-LoginGuard includes a baseline observation planner for future local Lab Mode reporting. This planner creates a safe plan from the existing Lab Mode plan and execution readiness metadata, but it does not execute the plan.
+LoginGuard includes a baseline observation planner for future local Lab Mode reporting. This planner creates an approved plan from the existing Lab Mode plan and execution readiness metadata, but it does not execute the plan.
 
 The baseline planner can return:
 
@@ -127,7 +127,7 @@ The baseline planner can return:
 - `blocked` when Lab Mode or execution readiness does not allow the category.
 - `skipped` when there is no detected form metadata to plan against.
 
-The planner records only safe form metadata:
+The planner records only approved form metadata:
 
 - Form index.
 - Method.
@@ -169,11 +169,11 @@ The confirmation gate does not:
 - Collect credentials.
 - Run payloads.
 
-This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only safety checks.
+This layer exists so future Lab Mode execution cannot be introduced without explicit user confirmation and the earlier local-only control checks.
 
 ## Baseline Observation Executor v0
 
-LoginGuard includes Baseline Observation Executor v0 for local Lab Mode pages. This is the first controlled Lab Mode executor, and it is intentionally limited to safe metadata observation.
+LoginGuard includes Baseline Observation Executor v0 for local Lab Mode pages. This is the first controlled Lab Mode executor, and it is intentionally limited to approved metadata observation.
 
 The executor may run only after:
 
@@ -183,7 +183,7 @@ The executor may run only after:
 - The Safe Execution Confirmation Gate allows the action.
 - The popup sends an explicit `userConfirmed: true` request.
 
-Baseline Observation Executor v0 records only safe observations:
+Baseline Observation Executor v0 records only approved observations:
 
 - Current URL before observation.
 - Total form count.
@@ -216,7 +216,7 @@ The planner can return:
 - `planned` when Lab Mode is allowed, execution readiness is allowed, and `empty-fields-observation` appears in readiness allowed categories.
 - `blocked` when the Lab Mode plan is missing or refused, execution readiness is missing or refused, or the category is not allowed.
 
-The planner records only safe form metadata from the existing Lab Mode plan:
+The planner records only approved form metadata from the existing Lab Mode plan:
 
 - Form index.
 - Method.
@@ -241,16 +241,16 @@ These reports are generated locally from the existing Lab Mode plan shown in the
 
 Current Lab Mode does not perform full active testing. The `executedTests` field is empty until the user runs the approved Baseline Observation Executor v0, which records metadata-only observations.
 
-Lab reports may include safe metadata already present in the Lab Mode plan:
+Lab reports may include approved metadata already present in the Lab Mode plan:
 
 - Allowed or refused status.
 - URL.
 - Reason.
-- Lab Mode Summary with lab status, what was checked, latest result, and safe-check reminder.
+- Lab Mode Summary with lab status, what was checked, latest result, and check-completed reminder.
 - Detected form metadata.
 - Detected input metadata.
 - Planned test categories.
-- Plain-language Lab Summary explaining what Lab Mode checked, what was safely observed, what was not done, and whether metadata-only baseline observation executed.
+- Plain-language Lab Summary explaining what Lab Mode checked, what was observed, what was not done, and whether metadata-only baseline observation executed.
 - `executedTests` containing metadata-only baseline observation results, when run.
 - Safety note.
 
@@ -283,7 +283,7 @@ The Lab Session page uses the same safe message flow as the popup. It does not s
 Lab Session also includes a short plain-language section that answers:
 
 - What happened?
-- What was safe?
+- Check completed
 - What should I look at?
 
 This section summarizes the current Lab Mode plan, execution readiness, and metadata-only observation status without adding new active behavior.
@@ -337,6 +337,6 @@ Do not enter real credentials into fixture pages.
 
 ## Safety Boundary
 
-Lab Mode Preview is for safe CTF and local lab learning only. It does not prove that a page is secure, and it should not be used as a workflow for testing third-party systems without permission.
+Lab Mode Preview is for authorized CTF and local lab learning only. It does not prove that a page is production-ready or secure, and it should not be used as a workflow for testing third-party systems without permission.
 
 Future Lab Mode work must remain aligned with `PROJECT.md`: local or explicitly authorized lab contexts only, clear user enablement, no real credential storage, no brute force, no bypass logic, and no public-site attack automation.

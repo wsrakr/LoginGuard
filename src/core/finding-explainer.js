@@ -1,6 +1,6 @@
 // Converts technical LoginGuard findings into plain-language explanations.
 (() => {
-  const DEFAULT_SAFETY_NOTE = "LoginGuard performed passive local analysis. It did not submit forms, collect credentials, run payloads, or prove the page is fully secure.";
+  const DEFAULT_SAFETY_NOTE = "LoginGuard performed passive local analysis. It did not submit forms, read passwords, change values, collect credentials, or run payloads.";
 
   const HEADER_LABELS = {
     "content-security-policy": "Content Security Policy is missing",
@@ -53,7 +53,7 @@
       whatWasFound: buildWhatWasFound(authType, hasAuthPage, findings.length, localContext),
       whyItMatters: buildSummaryWhyItMatters(localContext, topFinding),
       whatToFixFirst: buildWhatToFixFirst(topFinding, riskLevel),
-      whatWasNotDone: "LoginGuard did not submit forms, read credentials, run payloads, perform brute force, or prove the page is fully secure.",
+      whatWasNotDone: "LoginGuard did not submit forms, read passwords, change values, collect credentials, run payloads, or perform brute force.",
       safetyNote: report.safetyNote || DEFAULT_SAFETY_NOTE,
     };
   }
@@ -154,7 +154,7 @@
     }
 
     if (finding.severity === "high") {
-      return "This finding may affect how safely users interact with the page and should be reviewed promptly.";
+      return "This finding may affect login page production readiness and should be reviewed promptly.";
     }
 
     return "This finding adds context for a defensive review of the current page.";
@@ -187,15 +187,15 @@
     const status = finding.status.toLowerCase();
 
     if (severity === "high" || status === "fail") {
-      return "High priority";
+      return "High priority issue";
     }
 
     if (severity === "medium" || status === "warning") {
-      return "Medium priority";
+      return "Medium priority issue";
     }
 
     if (severity === "low") {
-      return "Low priority";
+      return "Low priority item";
     }
 
     return "Informational";
@@ -214,9 +214,9 @@
 
   function findTopFinding(explainedFindings) {
     const priorityOrder = {
-      "High priority": 0,
-      "Medium priority": 1,
-      "Low priority": 2,
+      "High priority issue": 0,
+      "Medium priority issue": 1,
+      "Low priority item": 2,
       Informational: 3,
     };
 
@@ -253,7 +253,7 @@
 
     return riskLevel === "unknown"
       ? "Review the page manually because no normalized findings were available."
-      : "Start with any high or medium risk items, then document remaining informational findings.";
+      : "Start with any high or medium priority items, then document remaining informational findings.";
   }
 
   function toTitleCase(value) {

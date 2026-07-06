@@ -7,9 +7,9 @@
   --text: #172033;
   --muted: #627089;
   --border: #d7deea;
-  --ok: #0f8a5f;
-  --warn: #a05b00;
-  --danger: #b42318;
+  --ready: #0f8a5f;
+  --attention: #a05b00;
+  --priority: #b42318;
   --shadow: 0 10px 26px rgba(29, 41, 57, 0.12);
 }
 
@@ -115,16 +115,16 @@ h2 {
   line-height: 1.25;
 }
 
-.status-card[data-state="safe"] {
-  border-color: color-mix(in srgb, var(--ok) 42%, var(--border));
+.status-card[data-state="ready"] {
+  border-color: color-mix(in srgb, var(--ready) 42%, var(--border));
 }
 
-.status-card[data-state="warning"] {
-  border-color: color-mix(in srgb, var(--warn) 48%, var(--border));
+.status-card[data-state="attention"] {
+  border-color: color-mix(in srgb, var(--attention) 48%, var(--border));
 }
 
-.status-card[data-state="danger"] {
-  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+.status-card[data-state="priority"] {
+  border-color: color-mix(in srgb, var(--priority) 50%, var(--border));
 }
 
 .summary-list {
@@ -272,7 +272,7 @@ h2 {
 }
 
 .report-button:focus-visible {
-  outline: 2px solid var(--ok);
+  outline: 2px solid var(--ready);
   outline-offset: 2px;
 }
 
@@ -288,11 +288,11 @@ h2 {
 }
 
 .report-status[data-state="success"] {
-  color: var(--ok);
+  color: var(--ready);
 }
 
 .report-status[data-state="error"] {
-  color: var(--danger);
+  color: var(--priority);
 }
 
 .lab-panel {
@@ -301,11 +301,11 @@ h2 {
 }
 
 .lab-panel[data-state="allowed"] {
-  border-color: color-mix(in srgb, var(--ok) 36%, var(--border));
+  border-color: color-mix(in srgb, var(--ready) 36%, var(--border));
 }
 
 .lab-panel[data-state="refused"] {
-  border-color: color-mix(in srgb, var(--warn) 42%, var(--border));
+  border-color: color-mix(in srgb, var(--attention) 42%, var(--border));
 }
 
 .lab-details {
@@ -326,11 +326,11 @@ h2 {
 }
 
 .lab-report-status[data-state="success"] {
-  color: var(--ok);
+  color: var(--ready);
 }
 
 .lab-report-status[data-state="error"] {
-  color: var(--danger);
+  color: var(--priority);
 }
 
 .lab-detail-row {

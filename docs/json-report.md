@@ -28,7 +28,7 @@ The copied report is generated locally from the latest popup analysis result. Lo
 | `authentication` | Authentication classification summary, confidence label, and confidence score. |
 | `fieldCounts` | Counts for detected password, username, and email fields. |
 | `findings` | Normalized finding objects produced by LoginGuard modules. |
-| `websiteCheckSummary` | Short owner/developer summary with result, risk, main issue, meaning, recommended fix, and safe-check reminder. |
+| `websiteCheckSummary` | Short owner/developer summary with result, production readiness, priority, main issue, meaning, recommended fix, and check-completed reminder. |
 | `plainLanguageSummary` | Human-friendly summary for non-technical readers, including what was found, why it matters, what to fix first, and what LoginGuard did not do. |
 | `explainedFindings` | Plain-language explanations derived from normalized findings while preserving technical IDs in `technicalDetail`. |
 | `risk` | Risk level and summary text when available. |
@@ -39,11 +39,13 @@ The copied report is generated locally from the latest popup analysis result. Lo
 | Website Check Field | Description |
 | --- | --- |
 | `result` | Whether LoginGuard detected a login/authentication surface. |
-| `risk` | Overall risk label from the current passive scan. |
+| `readiness` | Production-readiness interpretation for the current login page review. |
+| `priority` | Fix-priority label for developer follow-up. |
+| `risk` | Backward-compatible technical risk label from the current passive scan. |
 | `mainIssue` | Highest-priority plain-language issue to review first. |
 | `whatItMeans` | Short explanation of the issue. |
 | `whatToFix` | Defensive next step. |
-| `safeCheck` | Reminder that the check was passive and local. |
+| `checkCompleted` | Reminder that the check was passive and local. |
 
 Each finding uses the normalized finding shape:
 
@@ -129,24 +131,26 @@ The report should be safe to use for local notes and issue tracking, but users s
   ],
   "websiteCheckSummary": {
     "result": "Login page detected.",
+    "readiness": "Check completed; review noted items before production.",
+    "priority": "Low priority item",
     "risk": "low",
     "mainIssue": "Connection security",
     "whatItMeans": "The page is using a local development connection. This can be acceptable for fixtures, but production login pages should use HTTPS.",
     "whatToFix": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing.",
-    "safeCheck": "Passive local check only. No forms were submitted and no credentials were collected."
+    "checkCompleted": "Passive local check completed. No forms were submitted, no passwords were read, and no values were changed."
   },
   "plainLanguageSummary": {
     "mainResult": "Login authentication surface detected.",
     "context": "This appears to be a local development or lab page.",
     "riskLevel": "low",
     "topRecommendation": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing.",
-    "whatWasNotDone": "LoginGuard did not submit forms, read credentials, run payloads, perform brute force, or prove the page is fully secure."
+    "whatWasNotDone": "LoginGuard did not submit forms, read passwords, change values, collect credentials, run payloads, or perform brute force."
   },
   "explainedFindings": [
     {
       "id": "https.protocol",
       "plainTitle": "Connection security",
-      "riskLabel": "Low priority",
+      "riskLabel": "Low priority item",
       "recommendedAction": "Use HTTPS for deployed authentication pages; HTTP on localhost is acceptable for local fixture testing."
     }
   ],

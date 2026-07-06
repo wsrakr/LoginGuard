@@ -1,7 +1,7 @@
 // Lab Mode baseline observation planner. This creates metadata only and never executes tests.
 (() => {
   const CATEGORY = "baseline-submit-observation";
-  const SAFETY_NOTE = "Baseline observation planning only records safe metadata. It does not submit forms, create inputs, execute tests, or read input values.";
+  const SAFETY_NOTE = "Baseline observation planning only records approved metadata. It does not submit forms, create inputs, execute tests, read input values, or change values.";
   const OBSERVATIONS_PLANNED = [
     "current-url-before-action",
     "form-method-and-action-presence",

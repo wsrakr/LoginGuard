@@ -186,18 +186,18 @@ function renderAnalysis(analysis, labPlan, executionReadiness) {
 
   elements.currentUrl.textContent = analysis.url;
 
-  setCard(cards.https, elements.httpsStatus, analysis.security.usesHttps ? "HTTPS" : "Not HTTPS", analysis.security.usesHttps ? "safe" : "danger");
-  setCard(cards.login, elements.loginStatus, analysis.authenticationDetected ? "Yes" : "No", analysis.authenticationDetected ? "safe" : "warning");
-  setCard(cards.authType, elements.authTypeStatus, auth.type, auth.type === "Unknown" ? "warning" : "safe");
+  setCard(cards.https, elements.httpsStatus, analysis.security.usesHttps ? "HTTPS" : "Needs attention", analysis.security.usesHttps ? "ready" : "attention");
+  setCard(cards.login, elements.loginStatus, analysis.authenticationDetected ? "Detected" : "Not detected", analysis.authenticationDetected ? "ready" : "attention");
+  setCard(cards.authType, elements.authTypeStatus, auth.type, auth.type === "Unknown" ? "attention" : "ready");
   setCard(cards.confidence, elements.confidenceStatus, `${auth.confidence} (${auth.score}%)`, getConfidenceState(auth.score));
-  setCard(cards.fields, elements.fieldStatus, `${login.passwordFields} / ${usernameOrEmailFields}`, login.passwordFields > 0 || usernameOrEmailFields > 0 ? "safe" : "warning");
+  setCard(cards.fields, elements.fieldStatus, `${login.passwordFields} / ${usernameOrEmailFields}`, login.passwordFields > 0 || usernameOrEmailFields > 0 ? "ready" : "attention");
 
   renderSummary([
     ...analysis.risk.summary,
     `Password fields: ${login.passwordFields}.`,
     `Username/email fields: ${usernameOrEmailFields}.`,
     ...auth.reasons.map((reason) => `Reason: ${reason}.`),
-    "No forms were submitted and no data left this page.",
+    "Check completed: no forms were submitted, no passwords were read, and no values were changed.",
   ]);
 
   renderHeaders(analysis.modules.headers);
@@ -214,11 +214,11 @@ function renderUnsupportedPage(url) {
   currentBaselineObservationPlan = null;
   currentBaselineExecutionResult = null;
 
-  setCard(cards.https, elements.httpsStatus, "N/A", "warning");
-  setCard(cards.login, elements.loginStatus, "Unavailable", "warning");
-  setCard(cards.authType, elements.authTypeStatus, "N/A", "warning");
-  setCard(cards.confidence, elements.confidenceStatus, "N/A", "warning");
-  setCard(cards.fields, elements.fieldStatus, "Unavailable", "warning");
+  setCard(cards.https, elements.httpsStatus, "N/A", "attention");
+  setCard(cards.login, elements.loginStatus, "Unavailable", "attention");
+  setCard(cards.authType, elements.authTypeStatus, "N/A", "attention");
+  setCard(cards.confidence, elements.confidenceStatus, "N/A", "attention");
+  setCard(cards.fields, elements.fieldStatus, "Unavailable", "attention");
 
   renderSummary([
     "LoginGuard can inspect regular HTTP and HTTPS web pages.",
@@ -238,11 +238,11 @@ function renderError(error) {
   currentBaselineObservationPlan = null;
   currentBaselineExecutionResult = null;
 
-  setCard(cards.https, elements.httpsStatus, "Error", "danger");
-  setCard(cards.login, elements.loginStatus, "Error", "danger");
-  setCard(cards.authType, elements.authTypeStatus, "Error", "danger");
-  setCard(cards.confidence, elements.confidenceStatus, "Error", "danger");
-  setCard(cards.fields, elements.fieldStatus, "Error", "danger");
+  setCard(cards.https, elements.httpsStatus, "Needs attention", "attention");
+  setCard(cards.login, elements.loginStatus, "Needs attention", "attention");
+  setCard(cards.authType, elements.authTypeStatus, "Needs attention", "attention");
+  setCard(cards.confidence, elements.confidenceStatus, "Needs attention", "attention");
+  setCard(cards.fields, elements.fieldStatus, "Needs attention", "attention");
 
   renderSummary([
     "The current page could not be analyzed.",
@@ -297,11 +297,12 @@ function renderHumanSummary(analysis) {
   ensureHumanSummarySection();
   fillHumanSummary({
     result: "Checking the current page...",
-    risk: "unknown",
+    readiness: "Checking production readiness...",
+    priority: "unknown",
     mainIssue: "Preparing Website Check summary.",
     whatItMeans: "LoginGuard is reviewing browser-visible login page signals.",
     whatToFix: "Review the result once analysis finishes.",
-    safeCheck: "Passive local check only.",
+    checkCompleted: "Passive local check only.",
   });
 
   getReportBuilder()
@@ -316,11 +317,11 @@ function renderHumanSummary(analysis) {
     .catch((error) => {
       fillHumanSummary({
         result: "Website Check summary is unavailable.",
-        risk: analysis?.risk?.level || "unknown",
+        priority: analysis?.risk?.level || "unknown",
         mainIssue: "Summary could not be built.",
         whatItMeans: "The technical scan result may still be available below.",
         whatToFix: "Review the technical details manually.",
-        safeCheck: `Passive check only. Error: ${error.message}`,
+        checkCompleted: `Passive check only. Error: ${error.message}`,
       });
     });
 }
@@ -366,11 +367,12 @@ function fillHumanSummary(summary) {
 
   humanSummaryDetails.replaceChildren(
     createHumanSummaryRow("Result", summary.result || summary.mainResult || summary.whatWasFound || "No summary available."),
-    createHumanSummaryRow("Risk", summary.risk || summary.riskLevel || "unknown"),
+    createHumanSummaryRow("Production readiness", summary.readiness || "Check completed; review findings before production."),
+    createHumanSummaryRow("Priority", summary.priority || summary.risk || summary.riskLevel || "unknown"),
     createHumanSummaryRow("Main issue", summary.mainIssue || "No main issue was selected."),
     createHumanSummaryRow("What it means", summary.whatItMeans || summary.whyItMatters || "Review the technical details for context."),
     createHumanSummaryRow("What to fix", summary.whatToFix || summary.topRecommendation || summary.whatToFixFirst || "Review the findings below."),
-    createHumanSummaryRow("Safe check", summary.safeCheck || summary.safetyNote || summary.whatWasNotDone || "No forms were submitted and no credentials were collected."),
+    createHumanSummaryRow("Check completed", summary.checkCompleted || summary.safeCheck || summary.safetyNote || summary.whatWasNotDone || "No forms were submitted, no passwords were read, and no values were changed."),
   );
 }
 
@@ -1174,7 +1176,7 @@ function fillBaselineExecutionResultBlock(block, result) {
       Array.isArray(result.observations) ? result.observations.map((observation) => observation?.name).filter(Boolean) : [],
       "No observation names recorded.",
     ),
-    createLabSafetyNote(result.safetyNote || "Baseline observation recorded safe metadata only."),
+    createLabSafetyNote(result.safetyNote || "Baseline observation recorded approved metadata only."),
   );
 }
 
@@ -1308,7 +1310,7 @@ async function runCurrentBaselineObservation() {
 
     currentBaselineExecutionResult = executionResult;
     fillBaselineExecutionResultBlock(labExecutionResultBlock, executionResult);
-    setLabReportStatus("Baseline observation recorded safe metadata locally.", "success");
+    setLabReportStatus("Baseline observation completed with approved metadata only.", "success");
   } catch (error) {
     setLabReportStatus(`Could not run baseline observation: ${error.message}`, "error");
   }
@@ -1407,14 +1409,14 @@ function hideLabModePreview() {
 
 function getConfidenceState(confidenceScore) {
   if (confidenceScore >= 65) {
-    return "safe";
+    return "ready";
   }
 
   if (confidenceScore >= 50) {
-    return "warning";
+    return "attention";
   }
 
-  return "warning";
+  return "attention";
 }
 
 function isInspectableUrl(url) {
