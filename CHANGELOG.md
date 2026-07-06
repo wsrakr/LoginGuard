@@ -23,6 +23,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Refined Lab Mode report safety note wording for metadata-only baseline observation results.
 - Refined UI around Website Check and Lab Mode.
 - Improved product language for website owners and pentesters.
+- Refreshed README to reflect Website Check and Lab Mode product positioning.
 
 ## v0.0.1 - Prototype Foundation
 
