@@ -123,7 +123,7 @@ LoginGuard can copy local reports from the popup:
 
 - **JSON report:** structured data for developer notes, issue tracking, or future tooling.
 - **Markdown report:** readable report for sharing with developers, students, or internal teams.
-- **Short AI review prompt:** concise local prompt text for optional defensive review in ChatGPT, Claude, or another AI assistant.
+- **Short AI review prompt:** concise local prompt text with simplified top findings for optional defensive review in ChatGPT, Claude, or another AI assistant.
 - **Full technical AI prompt:** longer local prompt with the full report for deeper developer or security review.
 - **Demo report:** see [docs/demo-report.md](docs/demo-report.md) for a product-demo style report generated from a local fixture.
 

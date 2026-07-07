@@ -30,6 +30,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added v0.2.0 roadmap direction for Lab Check System and Firefox groundwork.
 - Clarified AI review prompt wording to avoid implying automatic AI integration.
 - Split AI review prompt export into short and full technical prompts.
+- Made the short AI review prompt more concise with simplified top findings.
 
 ## v0.0.1 - Prototype Foundation
 

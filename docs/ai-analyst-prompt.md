@@ -14,8 +14,8 @@ LoginGuard provides two local prompt exports:
 
 | Button | Recommended for | Included data |
 | --- | --- | --- |
-| **Copy Prompt for AI Review** | Most users, quick reviews, non-technical summaries, and short remediation planning. | Safety instructions, requested output sections, URL, security summary, authentication summary, field counts, risk summary, Website Check summary, safety note, and the top 5 findings only. |
-| **Copy Full Technical AI Prompt** | Developers, security teams, and authorized lab reviewers who need deeper technical context. | Safety instructions plus the full LoginGuard JSON report, including all normalized findings and explained findings. |
+| **Copy Prompt for AI Review** | Most users, quick reviews, non-technical summaries, and short remediation planning. | Safety instructions, requested output sections, URL, security summary, authentication summary, field counts, risk summary, Website Check summary, safety note, and simplified top findings. |
+| **Copy Full Technical AI Prompt** | Developers, security teams, and authorized lab reviewers who need deeper technical context. | Safety instructions plus the full LoginGuard JSON report, including raw normalized findings, explained findings, and technical details. |
 
 The short prompt is recommended for most users because it is easier to read and avoids sending a long technical report into an AI chat unless deeper review is needed.
 
@@ -27,9 +27,9 @@ The popup action **Copy Prompt for AI Review** creates a concise prompt that inc
 - Safety rules for authorized, defensive analysis.
 - A short, sanitized summary of the current LoginGuard report.
 - Requested output sections for business and developer audiences.
-- The top findings only.
+- Simplified top findings with title, priority, why it matters, and recommended action.
 
-The popup action **Copy Full Technical AI Prompt** creates a longer prompt for deeper review. It may include the full sanitized LoginGuard JSON report, all findings, explained findings, and technical details.
+The short prompt does not include raw finding IDs, sources, categories, statuses, confidence values, evidence lists, or long raw recommendations. The popup action **Copy Full Technical AI Prompt** creates a longer prompt for deeper review and keeps those raw technical details available.
 
 Either prompt can be pasted into an AI assistant to help turn LoginGuard findings into clearer summaries, developer tasks, and safe remediation notes.
 

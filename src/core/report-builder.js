@@ -231,30 +231,32 @@
       risk: report.risk,
       websiteCheckSummary: report.websiteCheckSummary,
       safetyNote: report.safetyNote,
-      topFindings: selectTopFindings(report.findings, 5),
+      topFindings: selectTopFindings(report, 5),
     };
   }
 
-  function selectTopFindings(findings, limit) {
+  function selectTopFindings(report, limit) {
+    const findings = report?.findings;
+
     if (!Array.isArray(findings)) {
       return [];
     }
 
+    const explainer = getFindingExplainer();
+
     return [...findings]
       .sort((left, right) => findingPriorityScore(left) - findingPriorityScore(right))
       .slice(0, limit)
-      .map((finding) => ({
-        id: finding.id,
-        source: finding.source,
-        category: finding.category,
-        status: finding.status,
-        severity: finding.severity,
-        confidence: finding.confidence,
-        title: finding.title,
-        summary: finding.summary,
-        evidence: Array.isArray(finding.evidence) ? finding.evidence.slice(0, 3) : [],
-        recommendation: shortenPromptText(finding.recommendation, 220),
-      }));
+      .map((finding) => {
+        const explainedFinding = explainer.explainFinding(finding, report);
+
+        return {
+          title: toPromptSentence(explainedFinding.plainTitle || finding.title || "Review this finding"),
+          priority: toPromptSentence(explainedFinding.riskLabel || toPriorityLabel(finding.severity)),
+          whyItMatters: toPromptSentence(explainedFinding.whyItMatters || explainedFinding.plainSummary || "This item may affect login-page readiness."),
+          recommendedAction: toPromptSentence(explainedFinding.recommendedAction || finding.recommendation || "Review this item and apply the appropriate defensive fix."),
+        };
+      });
   }
 
   function findingPriorityScore(finding) {
@@ -276,14 +278,10 @@
       + (statusOrder[String(finding?.status || "").toLowerCase()] ?? 9);
   }
 
-  function shortenPromptText(value, maxLength) {
+  function toPromptSentence(value) {
     const text = toMarkdownText(value);
 
-    if (text.length <= maxLength) {
-      return text;
-    }
-
-    return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+    return text || "Review this item.";
   }
 
   function createExecutiveSummary(report) {
