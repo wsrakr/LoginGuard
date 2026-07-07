@@ -555,6 +555,7 @@ function ensureReportSection() {
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
   const aiPromptButton = document.createElement("button");
+  const fullAiPromptButton = document.createElement("button");
   const labSessionButton = document.createElement("button");
   const status = document.createElement("p");
 
@@ -572,9 +573,12 @@ function ensureReportSection() {
   aiPromptButton.type = "button";
   aiPromptButton.className = "report-button";
   aiPromptButton.textContent = "Copy Prompt for AI Review";
+  fullAiPromptButton.type = "button";
+  fullAiPromptButton.className = "report-button";
+  fullAiPromptButton.textContent = "Copy Full Technical AI Prompt";
   aiPromptHelper.className = "report-helper";
   aiPromptHelper.textContent =
-    "Creates a local prompt you can paste into ChatGPT, Claude, or another AI assistant. LoginGuard does not send data automatically.";
+    "Short prompt: copies a short local prompt for optional AI review. No data is sent automatically. Full prompt: copies a longer technical prompt with the full report for deeper review.";
   labSessionButton.type = "button";
   labSessionButton.className = "report-button";
   labSessionButton.textContent = "Open Lab Session";
@@ -585,9 +589,10 @@ function ensureReportSection() {
   jsonButton.addEventListener("click", copyCurrentJsonReport);
   markdownButton.addEventListener("click", copyCurrentMarkdownReport);
   aiPromptButton.addEventListener("click", copyCurrentAiAnalystPrompt);
+  fullAiPromptButton.addEventListener("click", copyCurrentFullTechnicalAiPrompt);
   labSessionButton.addEventListener("click", openLabSessionPage);
 
-  actions.append(jsonButton, markdownButton, aiPromptButton, labSessionButton);
+  actions.append(jsonButton, markdownButton, aiPromptButton, fullAiPromptButton, labSessionButton);
   section.append(heading, actions, aiPromptHelper, status);
   shell.append(section);
 
@@ -668,10 +673,36 @@ async function copyCurrentAiAnalystPrompt() {
 
     const reportBuilder = await getReportBuilder();
 
-    await navigator.clipboard.writeText(reportBuilder.buildAiAnalystPrompt(currentAnalysis));
+    const buildPrompt = reportBuilder.buildAiReviewPrompt || reportBuilder.buildAiAnalystPrompt;
+
+    await navigator.clipboard.writeText(buildPrompt(currentAnalysis));
     setReportStatus("Prompt for AI review copied locally.", "success");
   } catch (error) {
     setReportStatus(`Could not copy prompt for AI review: ${error.message}`, "error");
+  }
+}
+
+async function copyCurrentFullTechnicalAiPrompt() {
+  if (!currentAnalysis) {
+    setReportStatus("No completed analysis is available to copy.", "error");
+    return;
+  }
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      throw new Error("Clipboard access is not available in this context.");
+    }
+
+    const reportBuilder = await getReportBuilder();
+
+    if (typeof reportBuilder.buildFullTechnicalAiReviewPrompt !== "function") {
+      throw new Error("Full technical prompt builder is not available.");
+    }
+
+    await navigator.clipboard.writeText(reportBuilder.buildFullTechnicalAiReviewPrompt(currentAnalysis));
+    setReportStatus("Full technical AI prompt copied locally.", "success");
+  } catch (error) {
+    setReportStatus(`Could not copy full technical AI prompt: ${error.message}`, "error");
   }
 }
 

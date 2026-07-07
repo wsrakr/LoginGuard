@@ -77,7 +77,7 @@ Current prototype capabilities include:
 - Lab JSON and Markdown reports.
 - Copy JSON Report.
 - Copy Markdown Report.
-- AI review prompt export.
+- Short and full AI review prompt exports for optional manual AI review.
 - Local fixtures for manual testing.
 
 ## What LoginGuard does not do
@@ -123,7 +123,8 @@ LoginGuard can copy local reports from the popup:
 
 - **JSON report:** structured data for developer notes, issue tracking, or future tooling.
 - **Markdown report:** readable report for sharing with developers, students, or internal teams.
-- **AI review prompt:** local prompt text for optional defensive review in ChatGPT, Claude, or another AI assistant.
+- **Short AI review prompt:** concise local prompt text for optional defensive review in ChatGPT, Claude, or another AI assistant.
+- **Full technical AI prompt:** longer local prompt with the full report for deeper developer or security review.
 - **Demo report:** see [docs/demo-report.md](docs/demo-report.md) for a product-demo style report generated from a local fixture.
 
 Lab Mode can also copy:
@@ -133,7 +134,7 @@ Lab Mode can also copy:
 
 Reports are generated locally from the current analysis result or Lab Mode plan and copied to the clipboard. LoginGuard does not send report data anywhere and does not store reports automatically.
 
-The AI review prompt is not an automatic AI integration. LoginGuard does not call an AI API, upload reports, or require an API key. It only copies a local prompt that the user may choose to paste into an AI assistant.
+The AI review prompt export is not an automatic AI integration. LoginGuard does not call an AI API, upload reports, or require an API key. It only copies local prompt text that the user may choose to paste into an AI assistant.
 
 ## Product Vision
 

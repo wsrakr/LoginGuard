@@ -150,31 +150,27 @@
     return lines.join("\n");
   }
 
-  function buildAiAnalystPrompt(analysis) {
+  function buildAiReviewPrompt(analysis) {
+    const report = buildJsonReport(analysis);
+    const promptReport = buildShortAiReviewReport(report);
+    const lines = [
+      ...buildAiReviewPromptPreamble(),
+      "Use the concise LoginGuard report data below. The user chose to paste this prompt manually. Do not infer access to page HTML, cookies, tokens, storage contents, credentials, form values, or the full findings array.",
+      "",
+      "## Concise LoginGuard Report",
+      "",
+      "```json",
+      JSON.stringify(promptReport, null, 2),
+      "```",
+    ];
+
+    return lines.join("\n");
+  }
+
+  function buildFullTechnicalAiReviewPrompt(analysis) {
     const jsonReport = buildJsonReport(analysis);
     const lines = [
-      "You are a defensive web security analyst reviewing a LoginGuard report that was copied locally by the user.",
-      "Write for both business stakeholders and developers. Be clear, practical, and professional.",
-      "This is a manual prompt for optional AI review, not an automatic LoginGuard AI integration.",
-      "",
-      "Safety rules:",
-      "- Do not provide exploit steps.",
-      "- Do not suggest unauthorized testing.",
-      "- Do not claim the page is production-ready or fully secure.",
-      "- Do not provide payloads, bypass instructions, brute-force workflows, or credential collection guidance.",
-      "- Focus on defensive remediation and reporting.",
-      "- Treat local development context as different from a deployed production authentication page.",
-      "- Assume LoginGuard did not call an AI API, upload reports, or send this data automatically.",
-      "",
-      "Requested output sections:",
-      "1. Executive summary for non-technical stakeholders",
-      "2. Technical summary for developers/security teams",
-      "3. Prioritized findings",
-      "4. Developer task list",
-      "5. Safe remediation suggestions",
-      "6. Context and false-positive notes",
-      "7. Manual verification checklist",
-      "",
+      ...buildAiReviewPromptPreamble(),
       "Output guidance:",
       "- Use concise headings and bullets.",
       "- Separate business impact from developer implementation details.",
@@ -192,6 +188,102 @@
     ];
 
     return lines.join("\n");
+  }
+
+  function buildAiAnalystPrompt(analysis) {
+    return buildAiReviewPrompt(analysis);
+  }
+
+  function buildAiReviewPromptPreamble() {
+    return [
+      "You are a defensive web security analyst reviewing a LoginGuard report that was copied locally by the user.",
+      "Write for both business stakeholders and developers. Be clear, practical, and professional.",
+      "This is a manual prompt for optional AI review, not an automatic LoginGuard AI integration.",
+      "LoginGuard does not call an AI API, upload reports automatically, or decide where this prompt is pasted.",
+      "",
+      "Safety rules:",
+      "- Do not provide exploit steps.",
+      "- Do not suggest unauthorized testing.",
+      "- Do not claim the page is production-ready or fully secure.",
+      "- Do not provide payloads, bypass instructions, brute-force workflows, or credential collection guidance.",
+      "- Focus on defensive remediation and reporting.",
+      "- Treat local development context as different from a deployed production authentication page.",
+      "- Assume the user chooses whether to paste this prompt into ChatGPT, Claude, or another AI assistant.",
+      "",
+      "Requested output sections:",
+      "1. Executive summary for non-technical stakeholders",
+      "2. Technical summary for developers/security teams",
+      "3. Prioritized findings",
+      "4. Developer task list",
+      "5. Safe remediation suggestions",
+      "6. Context and false-positive notes",
+      "7. Manual verification checklist",
+      "",
+    ];
+  }
+
+  function buildShortAiReviewReport(report) {
+    return {
+      url: report.url,
+      securitySummary: report.securitySummary,
+      authentication: report.authentication,
+      fieldCounts: report.fieldCounts,
+      risk: report.risk,
+      websiteCheckSummary: report.websiteCheckSummary,
+      safetyNote: report.safetyNote,
+      topFindings: selectTopFindings(report.findings, 5),
+    };
+  }
+
+  function selectTopFindings(findings, limit) {
+    if (!Array.isArray(findings)) {
+      return [];
+    }
+
+    return [...findings]
+      .sort((left, right) => findingPriorityScore(left) - findingPriorityScore(right))
+      .slice(0, limit)
+      .map((finding) => ({
+        id: finding.id,
+        source: finding.source,
+        category: finding.category,
+        status: finding.status,
+        severity: finding.severity,
+        confidence: finding.confidence,
+        title: finding.title,
+        summary: finding.summary,
+        evidence: Array.isArray(finding.evidence) ? finding.evidence.slice(0, 3) : [],
+        recommendation: shortenPromptText(finding.recommendation, 220),
+      }));
+  }
+
+  function findingPriorityScore(finding) {
+    const severityOrder = {
+      high: 0,
+      medium: 1,
+      low: 2,
+      info: 3,
+    };
+    const statusOrder = {
+      fail: 0,
+      warning: 1,
+      unknown: 2,
+      info: 3,
+      pass: 4,
+    };
+
+    return ((severityOrder[String(finding?.severity || "").toLowerCase()] ?? 9) * 10)
+      + (statusOrder[String(finding?.status || "").toLowerCase()] ?? 9);
+  }
+
+  function shortenPromptText(value, maxLength) {
+    const text = toMarkdownText(value);
+
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
   }
 
   function createExecutiveSummary(report) {
@@ -436,6 +528,8 @@
 
   globalThis.LoginGuardReportBuilder = {
     buildAiAnalystPrompt,
+    buildAiReviewPrompt,
+    buildFullTechnicalAiReviewPrompt,
     buildJsonReport,
     buildMarkdownReport,
   };
