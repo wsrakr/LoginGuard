@@ -335,6 +335,7 @@ Lab Mode should support safe CTF and local lab learning only. It should not prov
 | Documentation Website | Public docs, module authoring guide, and learning material. |
 | Local Lab Mode | Optional mode for local, private, intentionally vulnerable training pages only. |
 | Browser Compatibility | Support notes or adapters for Chromium-based browsers first, then other browsers if practical. |
+| Firefox/WebExtensions Compatibility | Future compatibility groundwork and testing for Firefox-based lab and VM workflows. |
 
 Future ecosystem work must remain aligned with `PROJECT.md`: passive by default, local-first, privacy-preserving, and authorized-use only.
 

@@ -111,6 +111,12 @@ LoginGuard is currently an early-stage prototype. The current focus is safe arch
 
 The extension is useful for local demonstrations and early workflow testing, but the project is still evolving.
 
+## Browser Support
+
+Chrome is the current primary supported browser for the LoginGuard prototype. Firefox/WebExtensions compatibility is planned because many lab users and pentesters work in Firefox-based VM environments, but Firefox support has not been fully tested yet.
+
+See [docs/browser-support.md](docs/browser-support.md) for browser compatibility principles and the future Firefox test checklist.
+
 ## Reporting
 
 LoginGuard can copy local reports from the popup:
@@ -173,6 +179,7 @@ After reloading the extension, refresh the inspected page before opening the pop
 - [docs/lab-mode.md](docs/lab-mode.md) - Lab Mode scope and restrictions.
 - [docs/json-report.md](docs/json-report.md) - local JSON report format.
 - [docs/ai-analyst-prompt.md](docs/ai-analyst-prompt.md) - local AI Analyst Prompt behavior and safety boundaries.
+- [docs/browser-support.md](docs/browser-support.md) - current browser target and future Firefox compatibility planning.
 - [docs/manual-test-matrix.md](docs/manual-test-matrix.md) - manual fixture testing notes.
 - [docs/demo-report.md](docs/demo-report.md) - product-demo style local fixture report.
 
