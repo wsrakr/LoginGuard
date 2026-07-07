@@ -31,6 +31,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Clarified AI review prompt wording to avoid implying automatic AI integration.
 - Split AI review prompt export into short and full technical prompts.
 - Made the short AI review prompt more concise with simplified top findings.
+- Reduced repeated wording in the short AI review prompt.
 
 ## v0.0.1 - Prototype Foundation
 

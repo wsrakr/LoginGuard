@@ -17,7 +17,7 @@ LoginGuard provides two local prompt exports:
 | **Copy Prompt for AI Review** | Most users, quick reviews, non-technical summaries, and short remediation planning. | Safety instructions, requested output sections, URL, security summary, authentication summary, field counts, risk summary, Website Check summary, safety note, and simplified top findings. |
 | **Copy Full Technical AI Prompt** | Developers, security teams, and authorized lab reviewers who need deeper technical context. | Safety instructions plus the full LoginGuard JSON report, including raw normalized findings, explained findings, and technical details. |
 
-The short prompt is recommended for most users because it is easier to read and avoids sending a long technical report into an AI chat unless deeper review is needed.
+The short prompt is recommended for most users because it is easier to read and avoids sending a long technical report into an AI chat unless deeper review is needed. It also uses one shared context note, such as localhost/local fixture context, so the same deployment caveat is not repeated inside every finding.
 
 ## What It Does
 
@@ -26,6 +26,7 @@ The popup action **Copy Prompt for AI Review** creates a concise prompt that inc
 - A defensive web security analyst role instruction.
 - Safety rules for authorized, defensive analysis.
 - A short, sanitized summary of the current LoginGuard report.
+- A shared context note for localhost/local fixture interpretation when relevant.
 - Requested output sections for business and developer audiences.
 - Simplified top findings with title, priority, why it matters, and recommended action.
 

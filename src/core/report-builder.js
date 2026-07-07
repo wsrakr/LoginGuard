@@ -230,9 +230,18 @@
       fieldCounts: report.fieldCounts,
       risk: report.risk,
       websiteCheckSummary: report.websiteCheckSummary,
+      contextNote: buildShortPromptContextNote(report),
       safetyNote: report.safetyNote,
       topFindings: selectTopFindings(report, 5),
     };
+  }
+
+  function buildShortPromptContextNote(report) {
+    if (report?.securitySummary?.isLocalContext) {
+      return "This is a localhost/local fixture. Missing production security headers may be acceptable during local testing, but should be reviewed before deployment.";
+    }
+
+    return "Review these findings in the context of the currently opened page. LoginGuard does not prove the page is fully secure.";
   }
 
   function selectTopFindings(report, limit) {
@@ -254,9 +263,60 @@
           title: toPromptSentence(explainedFinding.plainTitle || finding.title || "Review this finding"),
           priority: toPromptSentence(explainedFinding.riskLabel || toPriorityLabel(finding.severity)),
           whyItMatters: toPromptSentence(explainedFinding.whyItMatters || explainedFinding.plainSummary || "This item may affect login-page readiness."),
-          recommendedAction: toPromptSentence(explainedFinding.recommendedAction || finding.recommendation || "Review this item and apply the appropriate defensive fix."),
+          recommendedAction: buildShortRecommendedAction(finding, explainedFinding),
         };
       });
+  }
+
+  function buildShortRecommendedAction(finding, explainedFinding) {
+    const findingText = `${finding?.id || ""} ${finding?.title || ""} ${finding?.summary || ""}`.toLowerCase();
+    const headerName = findSecurityHeaderName(findingText);
+
+    if (headerName === "Content-Security-Policy") {
+      return "Add a production Content-Security-Policy header.";
+    }
+
+    if (headerName === "Strict-Transport-Security") {
+      return "Add HSTS on HTTPS production responses.";
+    }
+
+    if (headerName === "X-Frame-Options") {
+      return "Add X-Frame-Options or CSP frame-ancestors.";
+    }
+
+    if (headerName === "X-Content-Type-Options") {
+      return "Add X-Content-Type-Options: nosniff.";
+    }
+
+    if (headerName === "Referrer-Policy") {
+      return "Add a Referrer-Policy header.";
+    }
+
+    if (findingText.includes("https") || findingText.includes("transport")) {
+      return "Use HTTPS for deployed login pages.";
+    }
+
+    if (findingText.includes("authentication") || findingText.includes("login")) {
+      return "Review the detected authentication page behavior.";
+    }
+
+    return toPromptSentence(explainedFinding.recommendedAction || "Review this item and apply the appropriate defensive fix.");
+  }
+
+  function findSecurityHeaderName(text) {
+    const headers = [
+      "Content-Security-Policy",
+      "Strict-Transport-Security",
+      "X-Frame-Options",
+      "X-Content-Type-Options",
+      "Referrer-Policy",
+      "Permissions-Policy",
+      "Cross-Origin-Opener-Policy",
+      "Cross-Origin-Embedder-Policy",
+      "Cross-Origin-Resource-Policy",
+    ];
+
+    return headers.find((header) => text.includes(header.toLowerCase())) || null;
   }
 
   function findingPriorityScore(finding) {
