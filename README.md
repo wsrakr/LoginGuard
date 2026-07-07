@@ -77,7 +77,7 @@ Current prototype capabilities include:
 - Lab JSON and Markdown reports.
 - Copy JSON Report.
 - Copy Markdown Report.
-- AI Analyst Prompt export.
+- AI review prompt export.
 - Local fixtures for manual testing.
 
 ## What LoginGuard does not do
@@ -123,7 +123,7 @@ LoginGuard can copy local reports from the popup:
 
 - **JSON report:** structured data for developer notes, issue tracking, or future tooling.
 - **Markdown report:** readable report for sharing with developers, students, or internal teams.
-- **AI Analyst Prompt:** local prompt text for optional defensive analysis in an AI assistant.
+- **AI review prompt:** local prompt text for optional defensive review in ChatGPT, Claude, or another AI assistant.
 - **Demo report:** see [docs/demo-report.md](docs/demo-report.md) for a product-demo style report generated from a local fixture.
 
 Lab Mode can also copy:
@@ -133,6 +133,8 @@ Lab Mode can also copy:
 
 Reports are generated locally from the current analysis result or Lab Mode plan and copied to the clipboard. LoginGuard does not send report data anywhere and does not store reports automatically.
 
+The AI review prompt is not an automatic AI integration. LoginGuard does not call an AI API, upload reports, or require an API key. It only copies a local prompt that the user may choose to paste into an AI assistant.
+
 ## Product Vision
 
 LoginGuard starts as a Chrome extension, but the long-term direction is a defensive authentication-surface reporting ecosystem.
@@ -141,7 +143,7 @@ LoginGuard starts as a Chrome extension, but the long-term direction is a defens
 | --- | --- |
 | Public Extension | Quick single-page login-page readiness checks and local reporting. |
 | Business Monitoring | Future authorized domain inventory, one-time scans, scheduled scans, change detection, history, and team-friendly reports. |
-| AI Analyst | Future report explanation, priority guidance, developer task generation, executive summaries, and remediation guidance. |
+| AI Review Assistance | Future optional, explicit report explanation, priority guidance, developer task generation, executive summaries, and remediation guidance. |
 | Fix Assistant | Future reviewed suggestions for defensive configuration and code hardening. |
 | Lab Mode | Local/CTF/lab learning layer separated from public/business Website Check workflows. |
 
@@ -178,7 +180,7 @@ After reloading the extension, refresh the inspected page before opening the pop
 - [CHANGELOG.md](CHANGELOG.md) - prototype milestone history.
 - [docs/lab-mode.md](docs/lab-mode.md) - Lab Mode scope and restrictions.
 - [docs/json-report.md](docs/json-report.md) - local JSON report format.
-- [docs/ai-analyst-prompt.md](docs/ai-analyst-prompt.md) - local AI Analyst Prompt behavior and safety boundaries.
+- [docs/ai-analyst-prompt.md](docs/ai-analyst-prompt.md) - local AI review prompt behavior and safety boundaries.
 - [docs/browser-support.md](docs/browser-support.md) - current browser target and future Firefox compatibility planning.
 - [docs/manual-test-matrix.md](docs/manual-test-matrix.md) - manual fixture testing notes.
 - [docs/demo-report.md](docs/demo-report.md) - product-demo style local fixture report.

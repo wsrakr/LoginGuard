@@ -28,6 +28,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Refreshed README to reflect Website Check and Lab Mode product positioning.
 - Improved Lab Mode check cards with availability badges.
 - Added v0.2.0 roadmap direction for Lab Check System and Firefox groundwork.
+- Clarified AI review prompt wording to avoid implying automatic AI integration.
 
 ## v0.0.1 - Prototype Foundation
 
@@ -48,7 +49,7 @@ This early milestone establishes the LoginGuard prototype foundation. It is not 
 - Added popup rendering for findings, reasons, security headers, and summaries.
 - Added local JSON report copy.
 - Added local Markdown report copy.
-- Added AI Analyst Prompt copy for local, optional defensive analysis.
+- Added AI review prompt copy for local, optional defensive analysis.
 - Extracted report generation into a reusable core report builder.
 - Added local safe fixtures for manual testing.
 - Added a manual test matrix for local fixture behavior.
@@ -70,4 +71,4 @@ This early milestone establishes the LoginGuard prototype foundation. It is not 
 - Add a Lab Mode report builder.
 - Explore an HTML report preview.
 - Document the business monitoring model.
-- Continue shaping the future AI analyst layer.
+- Continue shaping future optional AI review assistance.

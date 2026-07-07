@@ -551,6 +551,7 @@ function ensureReportSection() {
   const section = document.createElement("section");
   const heading = document.createElement("h2");
   const actions = document.createElement("div");
+  const aiPromptHelper = document.createElement("p");
   const jsonButton = document.createElement("button");
   const markdownButton = document.createElement("button");
   const aiPromptButton = document.createElement("button");
@@ -570,7 +571,10 @@ function ensureReportSection() {
   markdownButton.textContent = "Copy Markdown Report";
   aiPromptButton.type = "button";
   aiPromptButton.className = "report-button";
-  aiPromptButton.textContent = "Copy AI Analyst Prompt";
+  aiPromptButton.textContent = "Copy Prompt for AI Review";
+  aiPromptHelper.className = "report-helper";
+  aiPromptHelper.textContent =
+    "Creates a local prompt you can paste into ChatGPT, Claude, or another AI assistant. LoginGuard does not send data automatically.";
   labSessionButton.type = "button";
   labSessionButton.className = "report-button";
   labSessionButton.textContent = "Open Lab Session";
@@ -584,7 +588,7 @@ function ensureReportSection() {
   labSessionButton.addEventListener("click", openLabSessionPage);
 
   actions.append(jsonButton, markdownButton, aiPromptButton, labSessionButton);
-  section.append(heading, actions, status);
+  section.append(heading, actions, aiPromptHelper, status);
   shell.append(section);
 
   reportSection = section;
@@ -665,9 +669,9 @@ async function copyCurrentAiAnalystPrompt() {
     const reportBuilder = await getReportBuilder();
 
     await navigator.clipboard.writeText(reportBuilder.buildAiAnalystPrompt(currentAnalysis));
-    setReportStatus("AI analyst prompt copied locally.", "success");
+    setReportStatus("Prompt for AI review copied locally.", "success");
   } catch (error) {
-    setReportStatus(`Could not copy AI analyst prompt: ${error.message}`, "error");
+    setReportStatus(`Could not copy prompt for AI review: ${error.message}`, "error");
   }
 }
 

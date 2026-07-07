@@ -153,8 +153,9 @@
   function buildAiAnalystPrompt(analysis) {
     const jsonReport = buildJsonReport(analysis);
     const lines = [
-      "You are a defensive web security analyst reviewing a LoginGuard report.",
+      "You are a defensive web security analyst reviewing a LoginGuard report that was copied locally by the user.",
       "Write for both business stakeholders and developers. Be clear, practical, and professional.",
+      "This is a manual prompt for optional AI review, not an automatic LoginGuard AI integration.",
       "",
       "Safety rules:",
       "- Do not provide exploit steps.",
@@ -163,6 +164,7 @@
       "- Do not provide payloads, bypass instructions, brute-force workflows, or credential collection guidance.",
       "- Focus on defensive remediation and reporting.",
       "- Treat local development context as different from a deployed production authentication page.",
+      "- Assume LoginGuard did not call an AI API, upload reports, or send this data automatically.",
       "",
       "Requested output sections:",
       "1. Executive summary for non-technical stakeholders",
@@ -180,7 +182,7 @@
       "- Call out local development context when it changes interpretation.",
       "- Keep remediation suggestions defensive and reviewable.",
       "",
-      "Use the LoginGuard report data below. Do not infer access to page HTML, cookies, tokens, storage contents, credentials, or form values.",
+      "Use the LoginGuard report data below. The user chose to paste this prompt manually. Do not infer access to page HTML, cookies, tokens, storage contents, credentials, or form values.",
       "",
       "## LoginGuard JSON Report",
       "",

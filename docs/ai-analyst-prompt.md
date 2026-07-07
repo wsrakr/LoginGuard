@@ -1,12 +1,16 @@
-# AI Analyst Prompt
+# AI Review Prompt
 
-LoginGuard can copy a local **AI Analyst Prompt** after a page scan completes. The prompt is generated from the current LoginGuard report and is intended to help users ask an AI assistant for defensive explanation, prioritization, and remediation planning.
+LoginGuard can copy a local **AI review prompt** after a page scan completes. The prompt is generated from the current LoginGuard report and is intended to help users ask ChatGPT, Claude, or another AI assistant for defensive explanation, prioritization, and remediation planning.
 
-This feature does not call an AI API. LoginGuard does not send the prompt anywhere, does not require an API key, and does not include an AI integration yet. The copied prompt stays local until the user chooses where to paste it.
+This is local prompt generation only. It is not an automatic AI integration.
+
+LoginGuard does not call an AI API. LoginGuard does not send report data automatically, does not upload the prompt, does not require an API key, and does not include a backend AI service. The copied prompt stays local until the user chooses whether and where to paste it.
+
+Future AI integrations, if added, must be explicit, opt-in, documented, and reviewed against LoginGuard's privacy and safety model.
 
 ## What It Does
 
-The popup action **Copy AI Analyst Prompt** creates a readable prompt that includes:
+The popup action **Copy Prompt for AI Review** creates a readable prompt that includes:
 
 - A defensive web security analyst role instruction.
 - Safety rules for authorized, defensive analysis.
@@ -14,6 +18,8 @@ The popup action **Copy AI Analyst Prompt** creates a readable prompt that inclu
 - Requested output sections for business and developer audiences.
 
 The prompt can be pasted into an AI assistant to help turn LoginGuard findings into clearer summaries, developer tasks, and safe remediation notes.
+
+The user controls this step. LoginGuard only copies the prompt to the clipboard; it does not decide where the prompt is pasted or send it to any service.
 
 ## Intended Output Sections
 
@@ -40,10 +46,10 @@ The prompt is generated from LoginGuard's sanitized report data. It does not inc
 - Page HTML.
 - Storage contents.
 
-Users should still review copied content before sharing it outside their team or lab.
+Users should review copied content before sharing it outside their team or lab.
 
 ## Safety Note
 
-The AI Analyst Prompt is for defensive analysis only. Do not use it to request exploit steps, unauthorized testing, payloads, brute force workflows, bypass guidance, or credential collection advice.
+The AI review prompt is for defensive analysis only. Do not use it to request exploit steps, unauthorized testing, payloads, brute force workflows, bypass guidance, or credential collection advice.
 
 LoginGuard performs passive local analysis. No forms were submitted and no credentials were collected.
