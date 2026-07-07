@@ -27,6 +27,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Improved product language for website owners and pentesters.
 - Refreshed README to reflect Website Check and Lab Mode product positioning.
 - Improved Lab Mode check cards with availability badges.
+- Added v0.2.0 roadmap direction for Lab Check System and Firefox groundwork.
 
 ## v0.0.1 - Prototype Foundation
 

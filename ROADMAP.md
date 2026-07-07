@@ -28,6 +28,77 @@ Current limitations:
 - Reports are not implemented.
 - Cookie, password policy, CSRF, UX, accessibility, and privacy modules are future work.
 
+## v0.2.0 - Lab Check System and Firefox Groundwork
+
+**Status:** Planned
+
+Goal: Turn Lab Mode into a clearer controlled-check workflow and prepare the codebase for future Firefox/WebExtensions compatibility.
+
+This milestone builds on the v0.1.0 Website Check and Lab Mode prototype. It should improve structure, language, and readiness for future browser compatibility without changing LoginGuard's safety boundaries.
+
+### Lab Check System
+
+Planned work:
+
+- Refine the Lab Check Registry.
+- Show user-friendly check cards for Lab Mode workflows.
+- Use clear availability states such as **Available**, **Planned**, and **Blocked for now**.
+- Keep technical check IDs available in technical details and reports.
+- Align Lab reports with check registry labels so reports read like controlled-check summaries instead of raw internal category lists.
+
+### Additional Lab Planners
+
+Planned work:
+
+- Add an Empty Fields Observation Planner.
+- Add a Response Message Comparison Planner.
+- Clearly distinguish planner-only checks from executable checks.
+- Avoid active execution unless a check is explicitly implemented with context checks, readiness checks, confirmation gates, and documentation.
+
+### Controlled Execution Safety
+
+Planned work:
+
+- Continue requiring a local or explicitly authorized lab context.
+- Continue requiring explicit confirmation before execution.
+- Keep metadata-only execution as the default allowed execution type.
+- Keep Lab Mode separated from Website Check.
+- Exclude brute force, password spraying, bypass automation, and unauthorized testing.
+
+### Firefox/WebExtensions Groundwork
+
+Planned work:
+
+- Maintain browser support planning documentation.
+- Explore small browser API adapters where Chrome and Firefox behavior differs.
+- Review current `chrome.*` API usage.
+- Evaluate whether a future `manifest.firefox.json` or equivalent build path is needed.
+- Temporarily load the extension in Firefox for manual compatibility testing.
+- Run localhost fixture tests in Firefox as part of compatibility review.
+- Do not claim Firefox support until compatibility testing is complete and documented.
+
+### Product UX
+
+Planned work:
+
+- Keep Website Check simple, readiness-focused, and understandable for website owners and developers.
+- Keep Lab Mode positioned as the pentester, student, and authorized lab workspace.
+- Continue improving visual badges and compact summaries.
+- Keep technical details available without making them dominate the default view.
+
+## Not planned for v0.2.0
+
+The following are not part of the v0.2.0 milestone:
+
+- Public-site active testing.
+- Credential collection.
+- Password brute force.
+- Password spraying.
+- Exploit payload packs.
+- Hidden network requests.
+- Claims that a site is fully secure.
+- Full Firefox release support before compatibility testing is complete.
+
 ## Phase 0: Documentation and Foundation
 
 **Status:** Current
