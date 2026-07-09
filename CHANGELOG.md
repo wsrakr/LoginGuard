@@ -19,6 +19,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added plain-language summaries to reports and UI.
 - Added Lab Mode Check Registry for clearer lab check labels.
 - Added browser support planning documentation for future Firefox compatibility.
+- Added browser API adapter groundwork for future Firefox/WebExtensions compatibility.
 
 ### Changed
 

@@ -1,4 +1,8 @@
 // Background service worker for lifecycle events and passive response-header capture.
+importScripts("../platform/browser-api.js");
+
+const browserApi = globalThis.LoginGuardBrowserApi;
+const extensionApi = globalThis.browser || globalThis.chrome || null;
 const SECURITY_HEADER_NAMES = [
   "content-security-policy",
   "strict-transport-security",
@@ -13,13 +17,13 @@ const SECURITY_HEADER_NAMES = [
 
 const GET_SECURITY_HEADERS_MESSAGE = "LOGIN_GUARD_GET_SECURITY_HEADERS";
 
-chrome.runtime.onInstalled.addListener(({ reason }) => {
+browserApi?.getRuntime()?.onInstalled?.addListener(({ reason }) => {
   if (reason === "install") {
     console.info("LoginGuard installed. Analysis runs only from the popup on the active tab.");
   }
 });
 
-chrome.webRequest.onHeadersReceived.addListener(
+extensionApi?.webRequest?.onHeadersReceived?.addListener(
   captureSecurityHeaders,
   {
     urls: ["http://*/*", "https://*/*"],
@@ -28,19 +32,26 @@ chrome.webRequest.onHeadersReceived.addListener(
   ["responseHeaders"],
 );
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+browserApi?.getRuntime()?.onMessage?.addListener((message, _sender, sendResponse) => {
   if (message?.type !== GET_SECURITY_HEADERS_MESSAGE) {
     return false;
   }
 
-  chrome.storage.session.get(getHeaderStorageKey(message.tabId), (items) => {
-    const snapshot = items[getHeaderStorageKey(message.tabId)] || null;
+  browserApi.storageGet("session", getHeaderStorageKey(message.tabId))
+    .then((items) => {
+      const snapshot = items?.[getHeaderStorageKey(message.tabId)] || null;
 
-    sendResponse({
-      ok: true,
-      snapshot: isSnapshotForUrl(snapshot, message.url) ? snapshot : null,
+      sendResponse({
+        ok: true,
+        snapshot: isSnapshotForUrl(snapshot, message.url) ? snapshot : null,
+      });
+    })
+    .catch((error) => {
+      sendResponse({
+        ok: false,
+        error: error.message || "Security header storage is not available.",
+      });
     });
-  });
 
   return true;
 });
@@ -57,8 +68,10 @@ function captureSecurityHeaders(details) {
     headers,
   };
 
-  chrome.storage.session.set({
+  browserApi.storageSet("session", {
     [getHeaderStorageKey(details.tabId)]: snapshot,
+  }).catch(() => {
+    // Header capture is best-effort; popup analysis can continue without a snapshot.
   });
 }
 

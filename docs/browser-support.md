@@ -6,6 +6,20 @@ Firefox compatibility is planned because many pentesters, students, and lab user
 
 Browser support work must preserve the LoginGuard safety model: Website Check remains passive and local-first, and Lab Mode remains restricted to local or explicitly authorized lab environments.
 
+## Browser API adapter groundwork
+
+LoginGuard now includes a small browser API adapter at `src/platform/browser-api.js`. It prefers the Promise-based `browser.*` namespace when available and falls back to Chrome's `chrome.*` namespace, wrapping callback-style operations in Promises.
+
+The popup, persistent Lab Session, and background service worker use this adapter for low-risk extension operations such as:
+
+- Querying and opening tabs.
+- Sending runtime and tab messages.
+- Executing the existing content-script bundle.
+- Resolving extension resource URLs.
+- Reading and writing the existing session storage snapshot.
+
+This reduces direct coupling to Chrome-specific API syntax, but it does not make LoginGuard a supported Firefox extension by itself. Manifest behavior, API availability, background execution, clipboard access, content scripts, and all local fixture workflows still require explicit Firefox testing.
+
 ## Target browsers
 
 | Browser | Status | Notes |
@@ -18,6 +32,7 @@ Browser support work must preserve the LoginGuard safety model: Website Check re
 
 - Keep core scanning, reporting, finding, and Lab Mode planning logic browser-neutral where possible.
 - Isolate browser-specific extension APIs behind small helpers or adapters when differences appear.
+- Route supported tab, runtime, scripting, and storage operations through the browser API adapter.
 - Avoid unnecessary Chrome-only APIs if a browser-neutral WebExtensions approach is practical.
 - Preserve local-first and safety-first behavior across every supported browser.
 - Do not add new permissions unless they are justified, documented, and reviewed for privacy impact.

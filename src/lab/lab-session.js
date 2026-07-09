@@ -58,6 +58,7 @@ let emptyFieldsPlannerLoadPromise = null;
 let responseMessagePlannerLoadPromise = null;
 let confirmationLoadPromise = null;
 let labCheckRegistryLoadPromise = null;
+let browserApiLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   organizeLabSessionLayout();
@@ -74,6 +75,7 @@ async function refreshSession() {
   clearSessionState();
 
   try {
+    const browserApi = await getBrowserApi();
     const tab = await resolveTargetTab();
 
     if (!tab || typeof tab.id !== "number" || !isInspectableUrl(tab.url)) {
@@ -85,7 +87,7 @@ async function refreshSession() {
     targetUrl = tab.url || "";
     elements.targetUrl.textContent = targetUrl;
 
-    await chrome.scripting.executeScript({
+    await browserApi.executeScript({
       target: { tabId: targetTabId },
       files: INJECTION_FILES,
     });
@@ -118,30 +120,29 @@ function clearSessionState() {
 }
 
 async function resolveTargetTab() {
+  const browserApi = await getBrowserApi();
   const params = new URLSearchParams(globalThis.location.search);
   const tabId = Number(params.get("tabId"));
 
   if (Number.isInteger(tabId) && tabId > 0) {
     try {
-      return await chrome.tabs.get(tabId);
+      return await browserApi.getTab(tabId);
     } catch (_error) {
       return null;
     }
   }
 
-  const currentSessionTab = await chrome.tabs.getCurrent();
+  const currentSessionTab = await browserApi.getCurrentTab();
 
   if (typeof currentSessionTab?.openerTabId === "number") {
     try {
-      return await chrome.tabs.get(currentSessionTab.openerTabId);
+      return await browserApi.getTab(currentSessionTab.openerTabId);
     } catch (_error) {
       return null;
     }
   }
 
-  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-  return activeTab;
+  return browserApi.getActiveTab();
 }
 
 function renderNoSupportedTab(reason = "") {
@@ -459,64 +460,54 @@ async function copyLabMarkdownReport() {
   }
 }
 
-function sendLabPlanMessage(tabId, url) {
-  return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tabId, {
+async function sendLabPlanMessage(tabId, url) {
+  try {
+    const browserApi = await getBrowserApi();
+    const response = await browserApi.sendTabMessage(tabId, {
       type: LAB_PLAN_MESSAGE_TYPE,
       context: { url },
-    }, (response) => {
-      const lastError = chrome.runtime.lastError;
-
-      if (lastError || !response?.ok) {
-        const reason = response?.error || lastError?.message || "Lab Mode plan could not be created.";
-
-        resolve({
-          labPlan: {
-            allowed: false,
-            url: url || "",
-            reason,
-            tests: [],
-            safetyNote: "Lab Mode preview is unavailable for this page.",
-          },
-          executionReadiness: createFallbackExecutionReadiness(reason),
-        });
-        return;
-      }
-
-      const safeLabPlan = response.labPlan || {};
-
-      resolve({
-        labPlan: {
-          ...safeLabPlan,
-          url: safeLabPlan.url || url || "",
-        },
-        executionReadiness: response.executionReadiness || createFallbackExecutionReadiness("Lab Mode execution readiness was not returned."),
-      });
     });
-  });
+
+    if (!response?.ok) {
+      throw new Error(response?.error || "Lab Mode plan could not be created.");
+    }
+
+    const safeLabPlan = response.labPlan || {};
+    return {
+      labPlan: {
+        ...safeLabPlan,
+        url: safeLabPlan.url || url || "",
+      },
+      executionReadiness: response.executionReadiness || createFallbackExecutionReadiness("Lab Mode execution readiness was not returned."),
+    };
+  } catch (error) {
+    const reason = error.message || "Lab Mode plan could not be created.";
+    return {
+      labPlan: {
+        allowed: false,
+        url: url || "",
+        reason,
+        tests: [],
+        safetyNote: "Lab Mode preview is unavailable for this page.",
+      },
+      executionReadiness: createFallbackExecutionReadiness(reason),
+    };
+  }
 }
 
 function sendBaselineObservationMessage(tabId, payload) {
-  return new Promise((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, {
+  return getBrowserApi()
+    .then((browserApi) => browserApi.sendTabMessage(tabId, {
       type: BASELINE_OBSERVATION_MESSAGE_TYPE,
       ...payload,
-    }, (response) => {
-      const lastError = chrome.runtime.lastError;
-
-      if (lastError) {
-        reject(new Error(lastError.message));
-        return;
-      }
-
+    }))
+    .then((response) => {
       if (!response || !response.ok) {
-        reject(new Error(response?.error || "Baseline observation could not be run."));
-        return;
+        throw new Error(response?.error || "Baseline observation could not be run.");
       }
 
-      resolve(response.result || response.executionResult);
+      return response.result || response.executionResult;
     });
-  });
 }
 
 async function buildBaselineObservationPlan(currentLabPlan, currentReadiness) {
@@ -565,7 +556,7 @@ async function getBaselinePlanner() {
   }
 
   if (!baselinePlannerLoadPromise) {
-    baselinePlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js"))
+    baselinePlannerLoadPromise = import(getExtensionUrl("src/lab/lab-baseline-observation.js"))
       .then(() => {
         if (!globalThis.LoginGuardLabBaselineObservation) {
           throw new Error("LoginGuard Lab baseline observation planner was not loaded.");
@@ -588,7 +579,7 @@ async function getEmptyFieldsPlanner() {
   }
 
   if (!emptyFieldsPlannerLoadPromise) {
-    emptyFieldsPlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js"))
+    emptyFieldsPlannerLoadPromise = import(getExtensionUrl("src/lab/lab-empty-fields-observation.js"))
       .then(() => {
         if (!globalThis.LoginGuardLabEmptyFieldsObservation) {
           throw new Error("LoginGuard Lab empty fields observation planner was not loaded.");
@@ -611,7 +602,7 @@ async function getResponseMessagePlanner() {
   }
 
   if (!responseMessagePlannerLoadPromise) {
-    responseMessagePlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-response-message-comparison.js"))
+    responseMessagePlannerLoadPromise = import(getExtensionUrl("src/lab/lab-response-message-comparison.js"))
       .then(() => {
         if (!globalThis.LoginGuardLabResponseMessageComparison) {
           throw new Error("LoginGuard Lab response message comparison planner was not loaded.");
@@ -634,7 +625,7 @@ async function getExecutionConfirmationGate() {
   }
 
   if (!confirmationLoadPromise) {
-    confirmationLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-confirmation.js"))
+    confirmationLoadPromise = import(getExtensionUrl("src/lab/lab-execution-confirmation.js"))
       .then(() => {
         if (!globalThis.LoginGuardLabExecutionConfirmation) {
           throw new Error("LoginGuard Lab execution confirmation gate was not loaded.");
@@ -657,11 +648,12 @@ async function getLabReportBuilder() {
   }
 
   if (!labReportLoadPromise) {
-    labReportLoadPromise = import(chrome.runtime.getURL("src/lab/lab-execution-result.js"))
-      .then(() => import(chrome.runtime.getURL("src/lab/lab-baseline-observation.js")))
-      .then(() => import(chrome.runtime.getURL("src/lab/lab-empty-fields-observation.js")))
-      .then(() => import(chrome.runtime.getURL("src/lab/lab-check-registry.js")))
-      .then(() => import(chrome.runtime.getURL("src/lab/lab-report.js")))
+    labReportLoadPromise = import(getExtensionUrl("src/lab/lab-execution-result.js"))
+      .then(() => import(getExtensionUrl("src/lab/lab-baseline-observation.js")))
+      .then(() => import(getExtensionUrl("src/lab/lab-empty-fields-observation.js")))
+      .then(() => import(getExtensionUrl("src/lab/lab-response-message-comparison.js")))
+      .then(() => import(getExtensionUrl("src/lab/lab-check-registry.js")))
+      .then(() => import(getExtensionUrl("src/lab/lab-report.js")))
       .then(() => {
         if (!globalThis.LoginGuardLabReport) {
           throw new Error("LoginGuard Lab report builder was not loaded.");
@@ -684,7 +676,7 @@ async function getLabCheckRegistry() {
   }
 
   if (!labCheckRegistryLoadPromise) {
-    labCheckRegistryLoadPromise = import(chrome.runtime.getURL("src/lab/lab-check-registry.js"))
+    labCheckRegistryLoadPromise = import(getExtensionUrl("src/lab/lab-check-registry.js"))
       .then(() => {
         if (!globalThis.LoginGuardLabCheckRegistry) {
           throw new Error("LoginGuard Lab check registry was not loaded.");
@@ -699,6 +691,41 @@ async function getLabCheckRegistry() {
   }
 
   return labCheckRegistryLoadPromise;
+}
+
+async function getBrowserApi() {
+  if (globalThis.LoginGuardBrowserApi) {
+    return globalThis.LoginGuardBrowserApi;
+  }
+
+  if (!browserApiLoadPromise) {
+    const adapterUrl = new URL("../platform/browser-api.js", globalThis.location.href).href;
+
+    browserApiLoadPromise = import(adapterUrl)
+      .then(() => {
+        if (!globalThis.LoginGuardBrowserApi) {
+          throw new Error("LoginGuard browser API adapter was not loaded.");
+        }
+
+        return globalThis.LoginGuardBrowserApi;
+      })
+      .catch((error) => {
+        browserApiLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return browserApiLoadPromise;
+}
+
+function getExtensionUrl(path) {
+  const url = globalThis.LoginGuardBrowserApi?.getRuntimeUrl(path);
+
+  if (!url) {
+    throw new Error("Extension URL generation is not available.");
+  }
+
+  return url;
 }
 
 function setStatus(element, message, state) {
