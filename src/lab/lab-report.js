@@ -13,6 +13,7 @@
     const initialExecutionResults = buildInitialExecutionResults(readiness);
     const baselineObservationPlan = buildBaselineObservationPlan(plan, readiness);
     const emptyFieldsObservationPlan = buildEmptyFieldsObservationPlan(plan, readiness);
+    const responseMessageComparisonPlan = buildResponseMessageComparisonPlan(plan, readiness);
     const safeExecutedTests = sanitizeExecutedTests(executedTests);
 
     const report = {
@@ -32,6 +33,7 @@
       initialExecutionResults,
       baselineObservationPlan,
       emptyFieldsObservationPlan,
+      responseMessageComparisonPlan,
       executedTests: safeExecutedTests,
       safetyNote: buildReportSafetyNote(safeExecutedTests),
     };
@@ -166,6 +168,24 @@
 
     appendCategoryLines(lines, "Observations planned", report.emptyFieldsObservationPlan.observationsPlanned);
     lines.push(`Safety note: ${toMarkdownText(report.emptyFieldsObservationPlan.safetyNote)}`);
+
+    lines.push("", "## Response Message Comparison Plan", "");
+    lines.push(`Status: ${toMarkdownText(report.responseMessageComparisonPlan.status)}`);
+    lines.push(`Reason: ${toMarkdownText(report.responseMessageComparisonPlan.reason)}`);
+
+    if (report.responseMessageComparisonPlan.targetForms.length === 0) {
+      lines.push("Target forms: none.");
+    } else {
+      lines.push("Target forms:");
+      report.responseMessageComparisonPlan.targetForms.forEach((form) => {
+        lines.push(
+          `- Form ${form.index}: method=${toMarkdownText(form.method)}, actionPresent=${form.actionPresent}, inputs=${form.inputCount}, authLikeInputs=${form.authLikeInputCount}, hasPasswordField=${form.hasPasswordField}, submitControlPresent=${form.submitControlPresent}`,
+        );
+      });
+    }
+
+    appendCategoryLines(lines, "Observations planned", report.responseMessageComparisonPlan.observationsPlanned);
+    lines.push(`Safety note: ${toMarkdownText(report.responseMessageComparisonPlan.safetyNote)}`);
 
     lines.push("", "## Executed Tests", "");
 
@@ -377,6 +397,36 @@
       hasPasswordField: Boolean(form?.hasPasswordField),
       submitControlPresent: Boolean(form?.submitControlPresent),
     }));
+  }
+
+  function buildResponseMessageComparisonPlan(labPlan, readiness) {
+    const planner = globalThis.LoginGuardLabResponseMessageComparison;
+
+    if (!planner?.buildResponseMessageComparisonPlan) {
+      return {
+        category: "response-message-comparison",
+        status: "blocked",
+        reason: "Response Message Comparison Planner is not available.",
+        targetForms: [],
+        observationsPlanned: [],
+        safetyNote: "Response message comparison planning was not available. No forms were submitted and no response bodies or input values were collected.",
+      };
+    }
+
+    return sanitizeResponseMessageComparisonPlan(
+      planner.buildResponseMessageComparisonPlan(labPlan, readiness),
+    );
+  }
+
+  function sanitizeResponseMessageComparisonPlan(plan) {
+    return {
+      category: String(plan?.category || "response-message-comparison"),
+      status: ["planned", "blocked"].includes(plan?.status) ? plan.status : "blocked",
+      reason: String(plan?.reason || ""),
+      targetForms: sanitizeEmptyFieldsTargetForms(plan?.targetForms),
+      observationsPlanned: sanitizeCategoryList(plan?.observationsPlanned),
+      safetyNote: String(plan?.safetyNote || ""),
+    };
   }
 
   function sanitizeBaselineTargetForms(forms) {

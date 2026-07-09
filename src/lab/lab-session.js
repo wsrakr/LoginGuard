@@ -32,6 +32,8 @@ const elements = {
   baselineObservations: document.querySelector("#baseline-observations"),
   emptyFieldsPlan: document.querySelector("#empty-fields-plan"),
   emptyFieldsObservations: document.querySelector("#empty-fields-observations"),
+  responseMessagePlan: null,
+  responseMessageObservations: null,
   confirmationSummary: document.querySelector("#confirmation-summary"),
   executionResult: document.querySelector("#execution-result"),
   executionObservations: document.querySelector("#execution-observations"),
@@ -47,11 +49,13 @@ let labPlan = null;
 let executionReadiness = null;
 let baselineObservationPlan = null;
 let emptyFieldsObservationPlan = null;
+let responseMessageComparisonPlan = null;
 let executionConfirmation = null;
 let baselineExecutionResult = null;
 let labReportLoadPromise = null;
 let baselinePlannerLoadPromise = null;
 let emptyFieldsPlannerLoadPromise = null;
+let responseMessagePlannerLoadPromise = null;
 let confirmationLoadPromise = null;
 let labCheckRegistryLoadPromise = null;
 
@@ -92,6 +96,7 @@ async function refreshSession() {
     executionReadiness = labModeResult.executionReadiness;
     baselineObservationPlan = await buildBaselineObservationPlan(labPlan, executionReadiness);
     emptyFieldsObservationPlan = await buildEmptyFieldsObservationPlan(labPlan, executionReadiness);
+    responseMessageComparisonPlan = await buildResponseMessageComparisonPlan(labPlan, executionReadiness);
     executionConfirmation = await buildExecutionConfirmation(labPlan, executionReadiness, baselineObservationPlan, false);
 
     renderSession();
@@ -106,6 +111,7 @@ function clearSessionState() {
   executionReadiness = null;
   baselineObservationPlan = null;
   emptyFieldsObservationPlan = null;
+  responseMessageComparisonPlan = null;
   executionConfirmation = null;
   baselineExecutionResult = null;
   renderSession();
@@ -189,6 +195,14 @@ function renderSession() {
   ]);
   renderList(elements.emptyFieldsObservations, emptyFieldsObservationPlan?.observationsPlanned || [], "No observations are currently planned.");
 
+  renderDetails(elements.responseMessagePlan, [
+    ["Status", responseMessageComparisonPlan?.status || "blocked"],
+    ["Reason", responseMessageComparisonPlan?.reason || "Response Message Comparison Planner is not available."],
+    ["Target forms", String(Array.isArray(responseMessageComparisonPlan?.targetForms) ? responseMessageComparisonPlan.targetForms.length : 0)],
+    ["Safety note", responseMessageComparisonPlan?.safetyNote || "Response Message Comparison Planner is not available."],
+  ]);
+  renderList(elements.responseMessageObservations, responseMessageComparisonPlan?.observationsPlanned || [], "No observations are currently planned.");
+
   renderDetails(elements.confirmationSummary, [
     ["Confirmed", executionConfirmation?.confirmed ? "Yes" : "No"],
     ["Allowed", executionConfirmation?.allowed ? "Yes" : "No"],
@@ -239,10 +253,12 @@ function organizeLabSessionLayout() {
   const checksPanel = elements.plannedCategories.closest(".panel");
   const resultPanel = elements.executionResult.closest(".panel");
   const actionsPanel = elements.copyJsonButton.closest(".panel");
+  const responseMessagePanel = createResponseMessageComparisonPanel();
   const technicalPanels = [
     document.querySelector(".grid"),
     elements.baselinePlan.closest(".panel"),
     elements.emptyFieldsPlan.closest(".panel"),
+    responseMessagePanel,
     elements.confirmationSummary.closest(".panel"),
   ].filter(Boolean);
   const details = document.createElement("details");
@@ -270,6 +286,23 @@ function organizeLabSessionLayout() {
     resultPanel.after(actionsPanel);
     actionsPanel.after(details);
   }
+}
+
+function createResponseMessageComparisonPanel() {
+  const panel = document.createElement("section");
+  const heading = document.createElement("h2");
+  const details = document.createElement("dl");
+  const observations = document.createElement("ul");
+
+  panel.className = "panel";
+  heading.textContent = "Response Message Comparison Plan";
+  details.className = "detail-list";
+  observations.className = "item-list";
+  panel.append(heading, details, observations);
+  elements.responseMessagePlan = details;
+  elements.responseMessageObservations = observations;
+
+  return panel;
 }
 
 function setPanelHeading(panel, text) {
@@ -498,6 +531,23 @@ async function buildEmptyFieldsObservationPlan(currentLabPlan, currentReadiness)
   return planner.buildEmptyFieldsObservationPlan(currentLabPlan, currentReadiness);
 }
 
+async function buildResponseMessageComparisonPlan(currentLabPlan, currentReadiness) {
+  try {
+    const planner = await getResponseMessagePlanner();
+
+    return planner.buildResponseMessageComparisonPlan(currentLabPlan, currentReadiness);
+  } catch {
+    return {
+      category: "response-message-comparison",
+      status: "blocked",
+      reason: "Response Message Comparison Planner is not available.",
+      targetForms: [],
+      observationsPlanned: [],
+      safetyNote: "Response Message Comparison Planner is not available.",
+    };
+  }
+}
+
 async function buildExecutionConfirmation(currentLabPlan, currentReadiness, currentBaselinePlan, userConfirmed) {
   const confirmationGate = await getExecutionConfirmationGate();
 
@@ -553,6 +603,29 @@ async function getEmptyFieldsPlanner() {
   }
 
   return emptyFieldsPlannerLoadPromise;
+}
+
+async function getResponseMessagePlanner() {
+  if (globalThis.LoginGuardLabResponseMessageComparison) {
+    return globalThis.LoginGuardLabResponseMessageComparison;
+  }
+
+  if (!responseMessagePlannerLoadPromise) {
+    responseMessagePlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-response-message-comparison.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabResponseMessageComparison) {
+          throw new Error("LoginGuard Lab response message comparison planner was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabResponseMessageComparison;
+      })
+      .catch((error) => {
+        responseMessagePlannerLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return responseMessagePlannerLoadPromise;
 }
 
 async function getExecutionConfirmationGate() {

@@ -255,6 +255,16 @@ It may list descriptive observation names such as `current-url-before-empty-fiel
 
 The Empty Fields Observation Planner does not submit forms, execute tests, read input values, clear fields, modify input values, create synthetic input values, or run payloads.
 
+## Response Message Comparison Planning
+
+LoginGuard includes a Response Message Comparison Planner for a future controlled local Lab Mode check. It prepares the `response-message-comparison` category from existing Lab Mode form metadata and execution readiness, but it does not execute the plan.
+
+The planner returns `planned` only when the Lab Mode plan and execution readiness are allowed and the category appears in the readiness allowlist. Otherwise, it returns `blocked`.
+
+The plan records only approved form metadata and descriptive observation names. It does not submit forms, collect response bodies, scrape page HTML, read or modify input values, create synthetic values, or send network requests.
+
+The Response Message Comparison Plan is available in popup technical details, the persistent Lab Session, and Lab JSON and Markdown reports. If the planner cannot be loaded, these surfaces show a safe unavailable message instead of interrupting the existing Lab Mode workflow.
+
 ## Lab Mode Reports
 
 Lab Mode Preview can copy local reports from the current Lab Mode test plan:

@@ -64,6 +64,7 @@ let reportBuilderLoadPromise = null;
 let labReportLoadPromise = null;
 let labBaselinePlannerLoadPromise = null;
 let labEmptyFieldsPlannerLoadPromise = null;
+let labResponseMessagePlannerLoadPromise = null;
 let labExecutionConfirmationLoadPromise = null;
 let labCheckRegistryLoadPromise = null;
 
@@ -801,6 +802,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
   const readinessBlock = createExecutionReadinessBlock(currentExecutionReadiness);
   const baselineBlock = createBaselineObservationBlock(labPlan, currentExecutionReadiness);
   const emptyFieldsBlock = createEmptyFieldsObservationBlock(labPlan, currentExecutionReadiness);
+  const responseMessageBlock = createResponseMessageComparisonBlock(labPlan, currentExecutionReadiness);
   const confirmationBlock = createExecutionConfirmationBlock(labPlan, currentExecutionReadiness);
   const executionResultBlock = createBaselineExecutionResultBlock();
   const safetyNote = document.createElement("p");
@@ -813,7 +815,7 @@ function renderLabModePreview(labPlan, executionReadiness) {
     ...items,
     availableChecksBlock,
     safetyNote,
-    createLabTechnicalDetailsBlock(categoriesBlock, readinessBlock, baselineBlock, emptyFieldsBlock, confirmationBlock, executionResultBlock),
+    createLabTechnicalDetailsBlock(categoriesBlock, readinessBlock, baselineBlock, emptyFieldsBlock, responseMessageBlock, confirmationBlock, executionResultBlock),
   );
   updateBaselineRunButton();
   setLabReportStatus("", "");
@@ -1179,6 +1181,34 @@ function createEmptyFieldsObservationBlock(labPlan, readiness) {
   return block;
 }
 
+function createResponseMessageComparisonBlock(labPlan, readiness) {
+  const block = document.createElement("div");
+
+  block.className = "lab-readiness lab-response-message-plan";
+  fillResponseMessageComparisonBlock(
+    block,
+    createUnavailableResponseMessagePlan("Response Message Comparison Planner is not available."),
+  );
+
+  getLabResponseMessagePlanner()
+    .then((planner) => {
+      if (currentLabPlan !== labPlan || currentExecutionReadiness !== readiness) {
+        return;
+      }
+
+      const plan = planner.buildResponseMessageComparisonPlan(labPlan, readiness);
+      fillResponseMessageComparisonBlock(block, plan);
+    })
+    .catch(() => {
+      fillResponseMessageComparisonBlock(
+        block,
+        createUnavailableResponseMessagePlan("Response Message Comparison Planner is not available."),
+      );
+    });
+
+  return block;
+}
+
 function createExecutionConfirmationBlock(labPlan, readiness) {
   const block = document.createElement("div");
 
@@ -1270,6 +1300,29 @@ function fillEmptyFieldsObservationBlock(block, emptyFieldsPlan) {
   );
 }
 
+function fillResponseMessageComparisonBlock(block, plan) {
+  const title = document.createElement("p");
+  const safetyNote = document.createElement("p");
+  const targetForms = Array.isArray(plan?.targetForms) ? plan.targetForms : [];
+  const observationsPlanned = Array.isArray(plan?.observationsPlanned)
+    ? plan.observationsPlanned
+    : [];
+
+  title.className = "lab-readiness-title";
+  title.textContent = "Response Message Comparison Plan";
+  safetyNote.className = "lab-safety-note";
+  safetyNote.textContent = plan?.safetyNote || "Response Message Comparison Planner is not available.";
+
+  block.replaceChildren(
+    title,
+    createLabDetailRow("Status", plan?.status || "blocked"),
+    createLabDetailRow("Reason", plan?.reason || "Response Message Comparison Planner is not available."),
+    createLabDetailRow("Target forms", String(targetForms.length)),
+    createLabCategoryListBlock("Observations planned", observationsPlanned, "No observations are currently planned."),
+    safetyNote,
+  );
+}
+
 function fillExecutionConfirmationBlock(block, confirmation) {
   const title = document.createElement("p");
   const safetyNote = document.createElement("p");
@@ -1347,6 +1400,16 @@ function createUnavailableEmptyFieldsPlan(reason) {
   };
 }
 
+function createUnavailableResponseMessagePlan(reason) {
+  return {
+    status: "blocked",
+    reason,
+    targetForms: [],
+    observationsPlanned: [],
+    safetyNote: "Response message comparison planning was not executed. No forms were submitted and no response bodies or input values were collected.",
+  };
+}
+
 function createUnavailableExecutionConfirmation(reason) {
   return {
     confirmed: false,
@@ -1401,6 +1464,29 @@ async function getLabEmptyFieldsPlanner() {
   }
 
   return labEmptyFieldsPlannerLoadPromise;
+}
+
+async function getLabResponseMessagePlanner() {
+  if (globalThis.LoginGuardLabResponseMessageComparison) {
+    return globalThis.LoginGuardLabResponseMessageComparison;
+  }
+
+  if (!labResponseMessagePlannerLoadPromise) {
+    labResponseMessagePlannerLoadPromise = import(chrome.runtime.getURL("src/lab/lab-response-message-comparison.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabResponseMessageComparison) {
+          throw new Error("LoginGuard Lab response message comparison planner was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabResponseMessageComparison;
+      })
+      .catch((error) => {
+        labResponseMessagePlannerLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return labResponseMessagePlannerLoadPromise;
 }
 
 async function getLabExecutionConfirmationGate() {
