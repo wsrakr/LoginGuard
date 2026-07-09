@@ -34,6 +34,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Split AI review prompt export into short and full technical prompts.
 - Made the short AI review prompt more concise with simplified top findings.
 - Reduced repeated wording in the short AI review prompt.
+- Polished Lab Session layout and safety-boundary presentation for v0.2.0.
 
 ## v0.0.1 - Prototype Foundation
 

@@ -316,6 +316,18 @@ The popup provides an **Open Lab Session** button. It opens `src/lab/lab-session
 
 The Lab Session page uses the same safe message flow as the popup. It does not store credentials, cookies, tokens, form values, page HTML, or storage contents. The latest metadata-only result may remain in page memory while the Lab Session tab is open.
 
+For v0.2.0, the Lab Session page is being shaped into a clearer persistent workflow page. It separates the page into:
+
+- A top session summary with the target URL, Lab Mode status, last generated time, and safety boundary summary.
+- A plain-language lab overview for quick interpretation.
+- Available lab check cards with labels, availability badges, descriptions, purpose, and safety level.
+- A visible Safety Boundaries section.
+- A latest result area.
+- Report actions.
+- Expandable technical details for planners, readiness, confirmation, and raw category IDs.
+
+The Safety Boundaries section is intentionally visible in the Lab Session UI. It reminds users that Lab Mode does not submit forms, read passwords or input values, modify input values, collect credentials, run payloads, navigate the page, or collect response bodies.
+
 Lab Session also includes a short plain-language section that answers:
 
 - What happened?

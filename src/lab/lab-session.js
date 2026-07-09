@@ -22,12 +22,16 @@ const INJECTION_FILES = [
 
 const elements = {
   targetUrl: document.querySelector("#target-url"),
+  topSummary: document.querySelector("#top-summary"),
   sessionStatus: document.querySelector("#session-status"),
   actionStatus: document.querySelector("#action-status"),
   plainLabSummary: document.querySelector("#plain-lab-summary"),
   labSummary: document.querySelector("#lab-summary"),
   readinessSummary: document.querySelector("#readiness-summary"),
   plannedCategories: document.querySelector("#planned-categories"),
+  plannedCategoryDetails: document.querySelector("#planned-category-details"),
+  initialExecutionResults: document.querySelector("#initial-execution-results"),
+  safetyBoundaries: document.querySelector("#safety-boundaries"),
   baselinePlan: document.querySelector("#baseline-plan"),
   baselineObservations: document.querySelector("#baseline-observations"),
   emptyFieldsPlan: document.querySelector("#empty-fields-plan"),
@@ -58,6 +62,7 @@ let emptyFieldsPlannerLoadPromise = null;
 let responseMessagePlannerLoadPromise = null;
 let confirmationLoadPromise = null;
 let labCheckRegistryLoadPromise = null;
+let executionResultHelperLoadPromise = null;
 let browserApiLoadPromise = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -159,6 +164,15 @@ function renderNoSupportedTab(reason = "") {
 
 function renderSession() {
   const plainSummary = buildPlainLabSessionSummary();
+  const generatedAt = labPlan?.generatedAt || "Not generated yet";
+  const boundarySummary = "No form submission, input value reading, credential collection, payload execution, navigation, or response body collection.";
+
+  renderDetails(elements.topSummary, [
+    ["Target URL", targetUrl || "No supported target selected."],
+    ["Lab Mode status", labPlan?.allowed ? "Allowed local lab context" : "Not available for this target"],
+    ["Last generated", generatedAt],
+    ["Safety boundary", boundarySummary],
+  ]);
 
   renderDetails(elements.plainLabSummary, [
     ["What happened?", plainSummary.whatHappened],
@@ -180,7 +194,22 @@ function renderSession() {
     ["Blocked categories", joinList(executionReadiness?.blockedCategories)],
   ]);
 
-  renderLabChecks(elements.plannedCategories, getLabCheckDefinitions(getPlannedCategories(labPlan)), "No lab checks are available for this target.");
+  renderLabChecks(elements.plannedCategories, getLabCheckDefinitions(getKnownLabCheckCategories()), "Lab check definitions are not available yet.");
+  renderList(
+    elements.plannedCategoryDetails,
+    getPlannedCategories(labPlan),
+    "No planned technical categories are available for this target.",
+  );
+  renderInitialExecutionResults(elements.initialExecutionResults);
+  renderList(elements.safetyBoundaries, [
+    "Submit forms.",
+    "Read passwords or input values.",
+    "Modify input values.",
+    "Collect credentials.",
+    "Run payloads.",
+    "Navigate the page.",
+    "Collect response bodies.",
+  ], "Safety boundary details are unavailable.");
 
   renderDetails(elements.baselinePlan, [
     ["Status", baselineObservationPlan?.status || "skipped"],
@@ -250,13 +279,19 @@ function buildPlainLabSessionSummary() {
 
 function organizeLabSessionLayout() {
   const subtitle = document.querySelector(".subtitle");
+  const targetPanel = elements.targetUrl.closest(".panel");
   const overviewPanel = elements.plainLabSummary.closest(".panel");
   const checksPanel = elements.plannedCategories.closest(".panel");
+  const safetyPanel = elements.safetyBoundaries.closest(".panel");
+  const rawCategoriesPanel = elements.plannedCategoryDetails.closest(".panel");
+  const initialExecutionResultsPanel = elements.initialExecutionResults.closest(".panel");
   const resultPanel = elements.executionResult.closest(".panel");
   const actionsPanel = elements.copyJsonButton.closest(".panel");
   const responseMessagePanel = createResponseMessageComparisonPanel();
   const technicalPanels = [
     document.querySelector(".grid"),
+    rawCategoriesPanel,
+    initialExecutionResultsPanel,
     elements.baselinePlan.closest(".panel"),
     elements.emptyFieldsPlan.closest(".panel"),
     responseMessagePanel,
@@ -272,8 +307,10 @@ function organizeLabSessionLayout() {
 
   setPanelHeading(overviewPanel, "Lab overview");
   setPanelHeading(checksPanel, "Available lab checks");
+  setPanelHeading(safetyPanel, "Safety Boundaries");
   setPanelHeading(resultPanel, "Latest result");
   setPanelHeading(actionsPanel, "Reports");
+  setPanelHeading(targetPanel, "Session summary");
 
   details.className = "panel technical-details";
   summary.textContent = "Technical details";
@@ -281,9 +318,10 @@ function organizeLabSessionLayout() {
   details.append(summary, content);
   technicalPanels.forEach((panel) => content.append(panel));
 
-  if (overviewPanel && checksPanel && resultPanel && actionsPanel) {
+  if (overviewPanel && checksPanel && safetyPanel && resultPanel && actionsPanel) {
     overviewPanel.after(checksPanel);
-    checksPanel.after(resultPanel);
+    checksPanel.after(safetyPanel);
+    safetyPanel.after(resultPanel);
     resultPanel.after(actionsPanel);
     actionsPanel.after(details);
   }
@@ -359,6 +397,8 @@ function renderLabChecks(container, checks, emptyText) {
       const header = document.createElement("div");
       const title = document.createElement("strong");
       const description = document.createElement("span");
+      const purpose = document.createElement("span");
+      const safetyLevel = document.createElement("span");
       const badge = document.createElement("span");
 
       listItem.className = "check-card";
@@ -368,12 +408,33 @@ function renderLabChecks(container, checks, emptyText) {
       badge.className = `check-badge ${getCheckBadgeClass(check)}`;
       badge.textContent = check.defaultStatusLabel || check.availability || "Unknown";
       description.textContent = check.shortDescription || "No description available.";
+      purpose.className = "check-purpose";
+      purpose.textContent = check.userPurpose || "Review this lab check manually.";
+      safetyLevel.className = "check-safety";
+      safetyLevel.textContent = `Safety level: ${formatSafetyLevel(check.safetyLevel)}`;
       header.append(title, badge);
-      listItem.append(header, description);
+      listItem.append(header, description, purpose, safetyLevel);
 
       return listItem;
     }),
   );
+}
+
+async function renderInitialExecutionResults(container) {
+  try {
+    const helper = await getExecutionResultHelper();
+    const initialResults = helper.buildInitialExecutionResults(executionReadiness);
+    const labels = initialResults.map((result) => {
+      const definition = getLabCheckDefinitions([result.category])[0];
+      const label = definition?.label || result.category;
+
+      return `${label}: ${result.status} - ${result.reason}`;
+    });
+
+    renderList(container, labels, "No initial execution results are available.");
+  } catch {
+    renderList(container, [], "Initial execution result helper is not available.");
+  }
 }
 
 function getCheckBadgeClass(definition) {
@@ -693,6 +754,29 @@ async function getLabCheckRegistry() {
   return labCheckRegistryLoadPromise;
 }
 
+async function getExecutionResultHelper() {
+  if (globalThis.LoginGuardLabExecutionResult) {
+    return globalThis.LoginGuardLabExecutionResult;
+  }
+
+  if (!executionResultHelperLoadPromise) {
+    executionResultHelperLoadPromise = import(getExtensionUrl("src/lab/lab-execution-result.js"))
+      .then(() => {
+        if (!globalThis.LoginGuardLabExecutionResult) {
+          throw new Error("LoginGuard Lab execution result helper was not loaded.");
+        }
+
+        return globalThis.LoginGuardLabExecutionResult;
+      })
+      .catch((error) => {
+        executionResultHelperLoadPromise = null;
+        throw error;
+      });
+  }
+
+  return executionResultHelperLoadPromise;
+}
+
 async function getBrowserApi() {
   if (globalThis.LoginGuardBrowserApi) {
     return globalThis.LoginGuardBrowserApi;
@@ -760,6 +844,17 @@ function getFriendlyLabCheckNames(categories) {
   return categories.map((category) => labels[category] || category);
 }
 
+function getKnownLabCheckCategories() {
+  const categories = [
+    "baseline-submit-observation",
+    "empty-fields-observation",
+    "invalid-synthetic-credentials-observation",
+    "response-message-comparison",
+  ];
+
+  return categories;
+}
+
 function getLabCheckDefinitions(categories) {
   const registry = globalThis.LoginGuardLabCheckRegistry;
 
@@ -776,6 +871,14 @@ function getLabCheckDefinitions(categories) {
     safetyLevel: "unknown",
     defaultStatusLabel: "Unknown",
   }));
+}
+
+function formatSafetyLevel(safetyLevel) {
+  return String(safetyLevel || "unknown")
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "Unknown";
 }
 
 function joinList(items) {

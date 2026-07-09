@@ -17,8 +17,9 @@
       </header>
 
       <section class="panel" aria-labelledby="target-heading">
-        <h2 id="target-heading">Target</h2>
+        <h2 id="target-heading">Session summary</h2>
         <p id="target-url" class="url-value">Loading target tab...</p>
+        <dl id="top-summary" class="detail-list summary-list"></dl>
         <p id="session-status" class="status-text" role="status" aria-live="polite"></p>
       </section>
 
@@ -42,6 +43,22 @@
       <section class="panel">
         <h2>Planned Categories</h2>
         <ul id="planned-categories" class="item-list"></ul>
+      </section>
+
+      <section class="panel safety-panel">
+        <h2>Safety Boundaries</h2>
+        <p class="panel-copy">Lab Mode keeps checks controlled and local. It does not:</p>
+        <ul id="safety-boundaries" class="boundary-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Planned Test Categories</h2>
+        <ul id="planned-category-details" class="item-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Initial Execution Results</h2>
+        <ul id="initial-execution-results" class="item-list"></ul>
       </section>
 
       <section class="panel">
