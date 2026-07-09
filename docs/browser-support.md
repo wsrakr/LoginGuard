@@ -10,6 +10,8 @@ Browser support work must preserve the LoginGuard safety model: Website Check re
 
 LoginGuard now includes a small browser API adapter at `src/platform/browser-api.js`. It prefers the Promise-based `browser.*` namespace when available and falls back to Chrome's `chrome.*` namespace, wrapping callback-style operations in Promises.
 
+This adapter is part of the `v0.2.0 - Lab Check System and Firefox Groundwork` release notes. It is compatibility groundwork only, not a Firefox support claim.
+
 The popup, persistent Lab Session, and background service worker use this adapter for low-risk extension operations such as:
 
 - Querying and opening tabs.

@@ -6,6 +6,16 @@ This project uses a simple changelog format for early prototype milestones. Logi
 
 ## Unreleased
 
+No unreleased changes yet.
+
+## v0.2.0 - Lab Check System and Firefox Groundwork
+
+Date: 2026-07-09
+
+This prototype milestone improves Lab Mode into a clearer controlled-check workflow for local and authorized lab users, while preparing browser API groundwork for future Firefox/WebExtensions compatibility.
+
+Chrome/Chromium remains the primary supported environment. Firefox/WebExtensions support is future groundwork only and is not claimed as supported in this release.
+
 ### Added
 
 - Added Lab Mode JSON and Markdown report copy from the local Lab Mode test plan preview.
@@ -20,6 +30,7 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Added Lab Mode Check Registry for clearer lab check labels.
 - Added browser support planning documentation for future Firefox compatibility.
 - Added browser API adapter groundwork for future Firefox/WebExtensions compatibility.
+- Added release notes for `v0.2.0 - Lab Check System and Firefox Groundwork`.
 
 ### Changed
 
@@ -35,6 +46,25 @@ This project uses a simple changelog format for early prototype milestones. Logi
 - Made the short AI review prompt more concise with simplified top findings.
 - Reduced repeated wording in the short AI review prompt.
 - Polished Lab Session layout and safety-boundary presentation for v0.2.0.
+
+### Safety Boundaries
+
+- Website Check remains passive and local-first.
+- Lab Mode remains restricted to local or explicitly authorized lab contexts.
+- Planner-only checks do not submit forms.
+- LoginGuard does not collect credentials.
+- LoginGuard does not read passwords or input values.
+- LoginGuard does not run payloads.
+- LoginGuard does not perform brute force or password spraying.
+- Invalid Credentials Check remains blocked for now.
+
+### Known Limitations
+
+- LoginGuard does not replace Chrome browser security warnings.
+- LoginGuard is not a full penetration testing tool.
+- LoginGuard does not prove that a site is secure.
+- Security header checks may depend on browser extension API behavior and local development context.
+- Firefox/WebExtensions compatibility is not supported yet and requires future testing.
 
 ## v0.0.1 - Prototype Foundation
 

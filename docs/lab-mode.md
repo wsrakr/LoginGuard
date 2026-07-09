@@ -328,6 +328,8 @@ For v0.2.0, the Lab Session page is being shaped into a clearer persistent workf
 
 The Safety Boundaries section is intentionally visible in the Lab Session UI. It reminds users that Lab Mode does not submit forms, read passwords or input values, modify input values, collect credentials, run payloads, navigate the page, or collect response bodies.
 
+See [v0.2.0 release notes](releases/v0.2.0.md) for the Lab Check System and Firefox Groundwork milestone summary.
+
 Lab Session also includes a short plain-language section that answers:
 
 - What happened?

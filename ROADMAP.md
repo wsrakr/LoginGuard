@@ -17,28 +17,40 @@ Current capabilities include:
 - Authentication surface detection.
 - Authentication page classification.
 - Security headers scanner when browser-observed response headers are available.
-- Basic popup rendering of findings, confidence, reasons, and recommendations.
+- Plain-language Website Check rendering for findings, confidence, reasons, and recommendations.
+- Local JSON and Markdown report copy.
+- Short and full AI review prompt export for optional manual review.
+- Local safe fixtures and manual test documentation.
+- Lab Mode preview for local or authorized lab contexts.
+- Persistent Lab Session workspace.
+- Metadata-only Baseline Observation Executor v0.
+- Lab Check Registry with user-facing availability labels.
+- Empty Fields Observation Planner.
+- Response Message Comparison Planner.
+- Browser API adapter groundwork for future WebExtensions compatibility.
 - Governance, security, contribution, and project direction documentation.
 
 Current limitations:
 
-- Module output is not fully standardized yet.
-- Risk scoring is still basic.
-- There are no automated tests or local fixture pages yet.
-- Reports are not implemented.
-- Cookie, password policy, CSRF, UX, accessibility, and privacy modules are future work.
+- Automated test coverage is still limited.
+- Risk scoring and finding prioritization are still conservative prototype logic.
+- Firefox/WebExtensions compatibility is not supported yet and requires testing.
+- Cookie, password policy, CSRF, UX, accessibility, and privacy modules remain future work.
+- Lab Mode focuses on safe metadata and planner workflows, not full penetration testing.
 
 ## v0.2.0 - Lab Check System and Firefox Groundwork
 
-**Status:** Planned
+**Status:** Ready for release
 
 Goal: Turn Lab Mode into a clearer controlled-check workflow and prepare the codebase for future Firefox/WebExtensions compatibility.
 
-This milestone builds on the v0.1.0 Website Check and Lab Mode prototype. It should improve structure, language, and readiness for future browser compatibility without changing LoginGuard's safety boundaries.
+This milestone builds on the v0.1.0 Website Check and Lab Mode prototype. It improves structure, language, and readiness for future browser compatibility without changing LoginGuard's safety boundaries.
+
+Release notes: [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md)
 
 ### Lab Check System
 
-Planned work:
+Completed work:
 
 - Refine the Lab Check Registry.
 - Show user-friendly check cards for Lab Mode workflows.
@@ -48,7 +60,7 @@ Planned work:
 
 ### Additional Lab Planners
 
-Planned work:
+Completed work:
 
 - Add an Empty Fields Observation Planner.
 - Add a Response Message Comparison Planner.
@@ -57,7 +69,7 @@ Planned work:
 
 ### Controlled Execution Safety
 
-Planned work:
+Completed work:
 
 - Continue requiring a local or explicitly authorized lab context.
 - Continue requiring explicit confirmation before execution.
@@ -67,11 +79,15 @@ Planned work:
 
 ### Firefox/WebExtensions Groundwork
 
-Planned work:
+Completed groundwork:
 
 - Maintain browser support planning documentation.
 - Explore small browser API adapters where Chrome and Firefox behavior differs.
 - Review current `chrome.*` API usage.
+- Add browser API adapter groundwork for current low-risk extension API usage.
+
+Future work:
+
 - Evaluate whether a future `manifest.firefox.json` or equivalent build path is needed.
 - Temporarily load the extension in Firefox for manual compatibility testing.
 - Run localhost fixture tests in Firefox as part of compatibility review.
@@ -79,7 +95,7 @@ Planned work:
 
 ### Product UX
 
-Planned work:
+Completed work:
 
 - Keep Website Check simple, readiness-focused, and understandable for website owners and developers.
 - Keep Lab Mode positioned as the pentester, student, and authorized lab workspace.
